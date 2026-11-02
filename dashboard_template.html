@@ -1,0 +1,2412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KSPG Sales &amp; Production Command Center</title>
+<style>
+  :root {
+    --bg-main: #0b0f19;
+    --bg-panel: #111827;
+    --bg-card: #1e293b;
+    --bg-hover: #26354d;
+    --bg-hdr: rgba(30, 41, 59, 0.65);
+    --border: #334155;
+    --text-main: #f8fafc;
+    --text-sub: #cbd5e1;
+    --text-muted: #94a3b8;
+    --blue: #3b82f6;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #e06c75;
+    --cyan: #06b6d4;
+    --purple: #8b5cf6;
+    --tbl-th-bg: #1e293b;
+    --tbl-th-text: #f8fafc;
+    --green-th-bg: #2f6f3e;
+    --green-th-text: #ffffff;
+  }
+
+  html[data-theme="light"] {
+    --bg-main: #f1f5f9;
+    --bg-panel: #ffffff;
+    --bg-card: #f8fafc;
+    --bg-hover: #e2e8f0;
+    --bg-hdr: #f1f5f9;
+    --border: #cbd5e1;
+    --text-main: #0f172a;
+    --text-sub: #1e293b;
+    --text-muted: #475569;
+    --blue: #2563eb;
+    --green: #059669;
+    --amber: #b45309;
+    --red: #9f1239;
+    --cyan: #0891b2;
+    --purple: #6d28d9;
+    --tbl-th-bg: #e2e8f0;
+    --tbl-th-text: #0f172a;
+    --green-th-bg: #1f5c2e;
+    --green-th-text: #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    background: var(--bg-main); color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 12px; user-select: none;
+  }
+  .app-shell { display: flex; flex-direction: column; width: 100vw; height: 100vh; padding: 6px 8px; gap: 6px; }
+
+  /* 2-ROW TOPBAR */
+  .topbar {
+    display: flex; flex-direction: column; background: var(--bg-panel);
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px;
+    gap: 6px; flex-shrink: 0; width: 100%;
+  }
+  .topbar-row-1, .topbar-row-2 { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; flex-wrap: nowrap; }
+  .topbar-row-2 { border-top: 1px solid var(--border); padding-top: 5px; }
+  .brand-box { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; }
+  .brand-indicator { width: 5px; height: 28px; background: var(--blue); border-radius: 3px; flex-shrink: 0; }
+  .brand-title { font-size: 13px; font-weight: 800; color: var(--text-main); white-space: nowrap; }
+  .brand-sub { font-size: 10px; color: var(--text-muted); display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .cal-pill { background: rgba(59,130,246,0.15); border: 1px solid var(--blue); color: var(--blue); padding: 1px 6px; border-radius: 4px; font-weight: 700; font-size: 9.5px; }
+
+  .slicers { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+  .slicer-group { display: flex; flex-direction: column; gap: 1px; }
+  .slicer-lbl { font-size: 8.5px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+  select, input[type="text"], input[type="date"], textarea {
+    background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 6px; font-size: 11px; outline: none; font-family: inherit;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--blue); }
+
+  .tab-bar { display: flex; gap: 6px; width: 100%; }
+  .tab-btn {
+    flex: 1; text-align: center; background: var(--bg-card); color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px;
+    font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.15s; white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text-main); border-color: var(--blue); }
+  .tab-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .tab-btn.yest-tab.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .tab-btn.rmpm-tab.active { background: #64748b; border-color: #64748b; color: #fff; }
+  .tab-btn.crit-tab.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+  .tab-btn.act-tab.active  { background: var(--amber); border-color: var(--amber); color: #fff; }
+
+  .btn-reset { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 10.5px; cursor: pointer; font-weight: 700; white-space: nowrap; }
+  .btn-reset:hover { background: var(--bg-hover); border-color: var(--text-muted); }
+  .btn-red-flag { background: var(--bg-card); color: var(--amber); border: 1px solid var(--amber); border-radius: 4px; padding: 4px 8px; font-size: 10.5px; cursor: pointer; font-weight: 800; white-space: nowrap; }
+  .btn-red-flag.active { background: var(--amber); color: #fff; }
+
+  body.highlighter-active table tbody tr, body.highlighter-active .kpi-card { cursor: crosshair !important; }
+  .red-highlighted { background-color: rgba(245, 158, 11, 0.20) !important; outline: 1.5px solid var(--amber) !important; outline-offset: -1px; }
+  .red-highlighted td { color: var(--text-main) !important; font-weight: 700 !important; }
+
+  /* KPI RIBBON */
+  .kpi-ribbon { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; height: 64px; flex-shrink: 0; transition: 0.15s; }
+  body.kpi-collapsed .kpi-ribbon { display: none; }
+  .kpi-card { background: var(--bg-panel); border: 1px solid var(--border); border-top: 3px solid var(--blue); border-radius: 6px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+  .kpi-card.green { border-top-color: var(--green); }
+  .kpi-card.amber { border-top-color: var(--amber); }
+  .kpi-card.red   { border-top-color: var(--red); }
+  .kpi-card.cyan  { border-top-color: var(--cyan); }
+  .kpi-card.purple{ border-top-color: var(--purple); }
+  .kpi-top { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; gap: 4px; }
+  .kpi-val { font-size: 15.5px; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi-sub { font-size: 9px; color: var(--text-muted); display: flex; justify-content: space-between; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 800; flex-shrink: 0; }
+  .badge.green { background: rgba(16,185,129,0.18); color: var(--green); }
+  .badge.amber { background: rgba(245,158,11,0.18); color: var(--amber); }
+  .badge.red   { background: rgba(224,108,117,0.16); color: var(--red); }
+  .badge.blue  { background: rgba(59,130,246,0.18); color: var(--blue); }
+  .badge.purple{ background: rgba(139,92,246,0.18); color: var(--purple); }
+
+  /* WORKSPACE */
+  .workspace { flex: 1; display: flex; width: 100%; min-height: 0; overflow: hidden; }
+  .view-pane { display: none; width: 100%; height: 100%; gap: 6px; min-height: 0; }
+  .view-pane.active { display: grid; }
+
+  #view-yesterday { grid-template-columns: 33% 67%; grid-template-rows: 100%; }
+  #view-demand    { grid-template-columns: 28% 72%; grid-template-rows: 1fr 1fr; }
+  #view-dispatch  { grid-template-columns: 28% 72%; grid-template-rows: 1fr 1fr; }
+  #view-rmpm      { grid-template-columns: 34% 66%; grid-template-rows: 1fr 1fr; }
+  #view-overview  { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  #view-stock     { grid-template-columns: 34% 66%; grid-template-rows: 1fr 1fr; }
+  #view-critical  { grid-template-columns: 100%; grid-template-rows: 100%; }
+  #view-actions   { grid-template-columns: 100%; grid-template-rows: 100%; }
+
+  /* COLLAPSIBLE LEFT GRAPHS -> FULL-FACE REPORT VIEW */
+  body.left-collapsed #view-yesterday,
+  body.left-collapsed #view-demand,
+  body.left-collapsed #view-dispatch,
+  body.left-collapsed #view-rmpm,
+  body.left-collapsed #view-stock {
+    grid-template-columns: 100% !important;
+  }
+  body.left-collapsed .yest-left-stack,
+  body.left-collapsed #view-demand > .panel:not(.span-2-rows),
+  body.left-collapsed #view-dispatch > .panel:not(.span-2-rows),
+  body.left-collapsed #view-rmpm > .panel:not(.span-2-rows),
+  body.left-collapsed #view-stock > .panel:not(.span-2-rows) {
+    display: none !important;
+  }
+  body.left-collapsed .panel.span-2-rows {
+    grid-column: 1 !important;
+  }
+
+  .panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 6px; display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }
+  .panel.span-2-rows { grid-row: 1 / span 2; grid-column: 2; }
+  .panel-hdr { padding: 4px 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-hdr); flex-shrink: 0; gap: 6px; flex-wrap: wrap; }
+  .panel-title { font-size: 11px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel-title.clickable { cursor: pointer; color: var(--blue); }
+  .panel-title.clickable:hover { text-decoration: underline; }
+  .panel-actions { display: flex; gap: 5px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+  .btn-xs { background: var(--bg-card); color: var(--text-sub); border: 1px solid var(--border); border-radius: 3px; padding: 2px 7px; font-size: 10px; cursor: pointer; font-weight: 600; }
+  .btn-xs:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .btn-xs.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .btn-xs.green { background: rgba(16,185,129,0.18); color: var(--green); border-color: var(--green); }
+  .btn-xs.green:hover { background: var(--green); color: #fff; }
+  .btn-xs.red { background: rgba(224,108,117,0.15); color: var(--red); border-color: var(--red); }
+
+  .panel-body { flex: 1; position: relative; min-height: 0; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .svg-chart-wrap { width: 100%; height: 100%; flex: 1; position: relative; overflow: hidden; }
+
+  .yest-left-stack { display: flex; flex-direction: column; gap: 6px; height: 100%; min-height: 0; overflow-y: auto; }
+  .yest-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px 8px; }
+  .yest-stat-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 5px; padding: 6px 8px; display: flex; flex-direction: column; justify-content: space-between; }
+  .yest-stat-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+  .yest-stat-val { font-size: 15px; font-weight: 800; color: var(--text-main); margin-top: 2px; }
+  .yest-stat-sub { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+
+  .tbl-wrap { flex: 1; overflow-y: auto; overflow-x: auto; min-height: 0; width: 100%; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead th { position: sticky; top: 0; background: var(--tbl-th-bg); color: var(--tbl-th-text); font-weight: 700; text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--border); z-index: 2; font-size: 10px; white-space: nowrap; }
+  thead th.num, tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr { border-bottom: 1px solid rgba(148,163,184,0.12); }
+  tbody tr:hover { background: var(--bg-hover); }
+  tbody td { padding: 4px 6px; color: var(--text-sub); white-space: nowrap; }
+
+  table.wrapped-report { table-layout: fixed; width: 100%; }
+  table.wrapped-report thead th { background: var(--green-th-bg); color: var(--green-th-text); white-space: normal; word-wrap: break-word; line-height: 1.2; padding: 5px 4px; font-size: 9.5px; vertical-align: middle; border-right: 1px solid rgba(255,255,255,0.15); border-bottom: 2px solid #143d1d; }
+  table.wrapped-report tbody td { white-space: normal; word-wrap: break-word; padding: 4px 4px; font-size: 10px; line-height: 1.2; vertical-align: middle; border-right: 1px solid rgba(148,163,184,0.12); }
+
+  /* Critical FG Table */
+  #tbl-critical thead th { font-size: 12px; padding: 8px 6px; }
+  #tbl-critical tbody td { font-size: 12.5px; padding: 7px 6px; line-height: 1.3; }
+  #tbl-critical .btn-xs { font-size: 11.5px; padding: 3px 8px; }
+  #tbl-critical .badge { font-size: 11px; padding: 2px 6px; }
+
+  /* Status Toggle Pill */
+  .ctrl-pill {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px;
+    border-radius: 12px; font-size: 11px; font-weight: 800; cursor: pointer;
+    border: 1px solid transparent; transition: 0.15s; user-select: none;
+  }
+  .ctrl-pill.critical { background: rgba(245,158,11,0.16); color: var(--amber); border-color: var(--amber); }
+  .ctrl-pill.normal   { background: rgba(16,185,129,0.18); color: var(--green); border-color: var(--green); }
+  .ctrl-pill:hover    { filter: brightness(1.15); transform: translateY(-1px); }
+
+  /* Inline Log Expand Button (+) & Sub-Row */
+  .btn-expand-log {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 22px; border-radius: 4px; font-size: 14px; font-weight: 900;
+    cursor: pointer; border: 1px solid var(--green); background: rgba(16,185,129,0.15);
+    color: var(--green); transition: 0.15s; line-height: 1; padding: 0;
+  }
+  .btn-expand-log:hover, .btn-expand-log.open { background: var(--green); color: #fff; }
+  tr.inline-log-row td { background: var(--bg-main) !important; padding: 8px 14px !important; border-bottom: 2px solid var(--blue) !important; }
+  .inline-log-box { background: var(--bg-panel); border: 1px solid var(--blue); border-radius: 6px; padding: 8px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+  .inline-log-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); font-size: 11.5px; font-weight: 800; color: var(--text-main); }
+  .inline-log-tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; table-layout: fixed; }
+  .inline-log-tbl th { background: var(--bg-card); color: var(--text-muted); font-size: 10px; text-transform: uppercase; padding: 4px 6px; border: 1px solid var(--border); position: static; }
+  .inline-log-tbl td { padding: 5px 6px !important; font-size: 11.5px !important; border: 1px solid var(--border) !important; white-space: normal !important; word-wrap: break-word !important; color: var(--text-main) !important; vertical-align: top !important; }
+
+  /* Action Tracker Due Badges */
+  .due-pill { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 800; }
+  .due-pill.overdue { background: rgba(224,108,117,0.2); color: var(--red); border: 1px solid var(--red); }
+  .due-pill.soon    { background: rgba(245,158,11,0.2); color: var(--amber); border: 1px solid var(--amber); }
+  .due-pill.ok      { background: rgba(16,185,129,0.18); color: var(--green); border: 1px solid var(--green); }
+  .due-pill.none    { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); }
+
+  /* POPOUT & DRILLDOWN MODALS */
+  .popout-overlay { display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(11, 15, 25, 0.96); padding: 10px; flex-direction: column; gap: 8px; }
+  html[data-theme="light"] .popout-overlay { background: rgba(241, 245, 249, 0.98); }
+  .popout-overlay.open { display: flex; }
+  .popout-hdr { display: flex; justify-content: space-between; align-items: center; background: var(--bg-panel); border: 1px solid var(--blue); border-radius: 6px; padding: 6px 12px; flex-shrink: 0; gap: 8px; flex-wrap: wrap; }
+  .popout-filter-bar { display: flex; align-items: center; gap: 8px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; flex-shrink: 0; flex-wrap: wrap; }
+
+  .chk-dd { position: relative; display: inline-block; }
+  .chk-dd-btn { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .chk-dd-menu { display: none; position: absolute; top: 105%; left: 0; z-index: 10000; background: var(--bg-panel); border: 1px solid var(--blue); border-radius: 6px; padding: 6px; min-width: 210px; max-height: 280px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+  .chk-dd.open .chk-dd-menu { display: block; }
+  .chk-dd-item { display: flex; align-items: center; gap: 6px; padding: 4px 6px; font-size: 11px; color: var(--text-main); cursor: pointer; border-radius: 3px; }
+  .chk-dd-item:hover { background: var(--bg-hover); }
+
+  /* Drilldown Grid */
+  .drill-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; flex-shrink: 0; }
+  .drill-grid { flex: 1; display: grid; grid-template-columns: 45% 55%; grid-template-rows: 46% 54%; gap: 8px; min-height: 0; overflow: hidden; }
+  .comment-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; overflow-y: auto; align-content: start; }
+  .comment-form .full { grid-column: 1 / span 3; }
+  .comment-form .span-2 { grid-column: span 2; }
+  .form-field { display: flex; flex-direction: column; gap: 2px; }
+  .form-field label { font-size: 9.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+
+  .save-toast { position: fixed; bottom: 14px; right: 14px; z-index: 10005; background: var(--green); color: #fff; padding: 8px 14px; border-radius: 6px; font-weight: 700; font-size: 12px; display: none; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+  .save-toast.error { background: var(--red); }
+
+  #chart-tooltip { position: fixed; pointer-events: none; z-index: 10001; background: rgba(15, 23, 42, 0.96); color: #f8fafc; border: 1px solid var(--blue); border-radius: 5px; padding: 6px 9px; font-size: 11px; line-height: 1.35; display: none; }
+</style>
+</head>
+<body>
+<div id="chart-tooltip"></div>
+<div id="save-toast" class="save-toast"></div>
+
+<!-- POPOUT REPORT MODAL -->
+<div id="demand-popout-modal" class="popout-overlay">
+  <div class="popout-hdr">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="popout-main-heading" style="font-size:14px;font-weight:800;">AUTOMATED PRODUCTION &amp; DEMAND REVIEW REPORT</span>
+      <span class="badge blue" id="popout-sub-badge">With BTS</span>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-xs active" id="btn-pop-mode-demand" onclick="setPopoutReportMode('DEMAND')">Monthly Demand &amp; Asking Rate</button>
+      <button class="btn-xs" id="btn-pop-mode-yest" onclick="setPopoutReportMode('YESTERDAY')">Yesterday Performance Report</button>
+      <button class="btn-red-flag" id="btn-red-flag-pop" onclick="toggleHighlighterMode()">🖍️ Highlight</button>
+      <button class="btn-xs" style="color:var(--amber);border-color:var(--amber);" onclick="autoHighlightDeficits()">⚡ Auto</button>
+      <button class="btn-xs" onclick="clearRedHighlights()">Clear</button>
+      <button class="btn-xs" onclick="exportCSV('tbl-demand-popout', 'KSPG_Filtered_Report.csv')">Export CSV</button>
+      <button class="btn-reset" onclick="closeDemandPopout()">✕ Close (Esc)</button>
+    </div>
+  </div>
+  <div class="popout-filter-bar">
+    <span style="font-weight:800;font-size:10.5px;color:var(--blue);text-transform:uppercase;">☑ Filters:</span>
+    <div class="chk-dd" id="dd-pop-mf"><button class="chk-dd-btn" onclick="toggleChkDd('dd-pop-mf', event)">Minifactory (<span id="cnt-pop-mf">All</span>) ▾</button><div class="chk-dd-menu" id="menu-pop-mf"></div></div>
+    <div class="chk-dd" id="dd-pop-line"><button class="chk-dd-btn" onclick="toggleChkDd('dd-pop-line', event)">Line (<span id="cnt-pop-line">All</span>) ▾</button><div class="chk-dd-menu" id="menu-pop-line"></div></div>
+    <div class="chk-dd" id="dd-pop-cust"><button class="chk-dd-btn" onclick="toggleChkDd('dd-pop-cust', event)">Customer (<span id="cnt-pop-cust">All</span>) ▾</button><div class="chk-dd-menu" id="menu-pop-cust"></div></div>
+    <div class="chk-dd" id="dd-pop-status"><button class="chk-dd-btn" onclick="toggleChkDd('dd-pop-status', event)">Performance Status (<span id="cnt-pop-status">All</span>) ▾</button><div class="chk-dd-menu" id="menu-pop-status"></div></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+      <span class="slicer-lbl">BTS:</span>
+      <select id="sel-bts-popout" onchange="syncBtsMode(this.value)"><option value="WITH_BTS">With BTS</option><option value="WITHOUT_BTS">Without BTS</option></select>
+      <span class="slicer-lbl">Unit:</span>
+      <select id="sel-mode-popout" onchange="syncUnitMode(this.value)"><option value="QTY">Quantity (Units)</option><option value="INR">Money (₹ INR)</option><option value="LAKH">Money (₹ Lakhs)</option></select>
+      <input type="text" id="inp-demand-popout" placeholder="Search Part / Desc / Cust..." oninput="renderPopoutTable()" style="width:170px;" />
+    </div>
+  </div>
+  <div class="panel" style="flex:1;"><div class="tbl-wrap"><table id="tbl-demand-popout" class="wrapped-report"><colgroup id="cg-demand-popout"></colgroup><thead id="th-demand-popout"></thead><tbody id="tb-demand-popout"></tbody></table></div></div>
+</div>
+
+<!-- FULL CRITICAL FG DRILLDOWN & STAKEHOLDER COMMENTS MODAL -->
+<div id="fg-drill-modal" class="popout-overlay" style="z-index:9999;">
+  <div class="popout-hdr">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="drill-title" style="font-size:14px;font-weight:800;color:var(--text-main);">FG DRILLDOWN</span>
+      <span class="badge blue" id="drill-sub">Customer | Minifactory / Line</span>
+      <span class="badge green" id="drill-srv-badge">● Auto-save Ready</span>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="btn-xs" onclick="exportCurrentPartCommentsCSV()">Export History CSV</button>
+      <button class="btn-reset" onclick="closeFgDrill()">✕ Close (Esc)</button>
+    </div>
+  </div>
+
+  <div class="drill-kpis" id="drill-kpis"></div>
+
+  <div class="drill-grid">
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Daily Production &amp; Dispatch (MB51) vs Daily Plan</div>
+        <div class="panel-actions">
+          <button class="btn-xs active" id="btn-drill-val" onclick="setDrillChartMode('VAL')">Value (₹)</button>
+          <button class="btn-xs" id="btn-drill-qty" onclick="setDrillChartMode('QTY')">Quantity (Nos)</button>
+        </div>
+      </div>
+      <div class="panel-body"><div id="ch-drill-daily" class="svg-chart-wrap"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-hdr"><div class="panel-title">Stock, Movements &amp; Raw Material Gaps (same Minifactory / Line)</div></div>
+      <div class="panel-body"><div class="tbl-wrap" id="drill-context-wrap"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Add Stakeholder Input (Auto-Saves to Critical_FG_Comments_Log.xlsx)</div>
+        <div class="panel-actions">
+          <button class="btn-xs" onclick="resetCommentForm()">New / Clear</button>
+          <button class="btn-xs green" onclick="saveCurrentComment()">💾 Save Comment</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="comment-form">
+          <input type="hidden" id="cf-id" value="" />
+          <div class="form-field">
+            <label>Stakeholder / Team</label>
+            <input type="text" id="cf-stakeholder" list="dl-stakeholders" placeholder="e.g. Logistics / SCM" />
+            <datalist id="dl-stakeholders">
+              <option value="Logistics"><option value="Purchase / SCM"><option value="Quality"><option value="Planning">
+              <option value="Production"><option value="Maintenance"><option value="Tooling"><option value="Supplier">
+              <option value="Customer Service"><option value="Plant Head">
+            </datalist>
+          </div>
+          <div class="form-field">
+            <label>Issue Category</label>
+            <select id="cf-category">
+              <option>RM Shortage</option><option>Machine / Breakdown</option><option>Quality</option>
+              <option>Manpower</option><option>Tooling / Fixture</option><option>Logistics / Transport</option>
+              <option>Customer Schedule</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Control Status</label>
+            <select id="cf-criticality" style="font-weight:800;">
+              <option value="Critical">● Focus / Needs Review</option>
+              <option value="Normal">✓ Normal (In Control)</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label>Stakeholder Input / Discussion (Root Cause)</label>
+            <textarea id="cf-discussion" rows="2" placeholder="What did the stakeholder explain about the deficit or delay?"></textarea>
+          </div>
+          <div class="form-field full">
+            <label>Action Being Taken (Recovery Plan)</label>
+            <textarea id="cf-action" rows="2" placeholder="What specific action is being taken to recover the pending plan?"></textarea>
+          </div>
+          <div class="form-field">
+            <label>Owner</label>
+            <input type="text" id="cf-owner" placeholder="Person responsible" />
+          </div>
+          <div class="form-field">
+            <label>Target Date</label>
+            <input type="date" id="cf-target" />
+          </div>
+          <div class="form-field">
+            <label>Action Status</label>
+            <select id="cf-status"><option>Open</option><option>In Progress</option><option>Closed</option></select>
+          </div>
+          <div class="form-field">
+            <label>Need Escalation?</label>
+            <select id="cf-boss"><option>No</option><option>Yes</option></select>
+          </div>
+          <div class="form-field span-2">
+            <label>Escalation Details (if Escalation Needed)</label>
+            <input type="text" id="cf-help" placeholder="What escalation or support is needed?" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-hdr"><div class="panel-title">Discussion History (Stored in Critical_FG_Comments_Log.xlsx)</div></div>
+      <div class="panel-body">
+        <div class="tbl-wrap">
+          <table class="wrapped-report">
+            <colgroup>
+              <col style="width:11%"><col style="width:10%"><col style="width:10%"><col style="width:20%">
+              <col style="width:20%"><col style="width:10%"><col style="width:7%"><col style="width:6%"><col style="width:6%">
+            </colgroup>
+            <thead>
+              <tr><th>Date</th><th>Stakeholder</th><th>Category</th><th>Stakeholder Input</th><th>Action Taken</th><th>Owner / Target</th><th>Control</th><th>Status</th><th>Edit</th></tr>
+            </thead>
+            <tbody id="tb-drill-comments"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APPLICATION SHELL -->
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-row-1">
+      <div class="brand-box">
+        <div class="brand-indicator"></div>
+        <div>
+          <div class="brand-title">KSPG SALES &amp; PRODUCTION COMMAND CENTER</div>
+          <div class="brand-sub">
+            <span id="hdr-cutoff"></span>
+            <span class="cal-pill" id="hdr-cal"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slicers">
+        <div class="slicer-group">
+          <span class="slicer-lbl" style="color:var(--green)">Yesterday Date (MB51)</span>
+          <select id="sel-yest-date" onchange="onYesterdayDateChange(this.value)" style="border-color:var(--green);font-weight:700;max-width:195px;"></select>
+        </div>
+        <div class="slicer-group">
+          <span class="slicer-lbl">Minifactory</span>
+          <select id="sel-mf" onchange="onMfChange()"><option value="ALL">All</option></select>
+        </div>
+        <div class="slicer-group">
+          <span class="slicer-lbl">Line</span>
+          <select id="sel-line" onchange="renderDashboard()"><option value="ALL">All</option></select>
+        </div>
+        <div class="slicer-group">
+          <span class="slicer-lbl">Customer</span>
+          <select id="sel-cust" onchange="renderDashboard()"><option value="ALL">All</option></select>
+        </div>
+        <div class="slicer-group">
+          <span class="slicer-lbl" style="color:var(--blue)">BTS Option</span>
+          <select id="sel-bts" onchange="syncBtsMode(this.value)">
+            <option value="WITH_BTS">With BTS (Incl.)</option>
+            <option value="WITHOUT_BTS">Without BTS (-BTS)</option>
+          </select>
+        </div>
+        <div class="slicer-group">
+          <span class="slicer-lbl">Qty / Money</span>
+          <select id="sel-mode" onchange="syncUnitMode(this.value)">
+            <option value="QTY">Quantity (Units)</option>
+            <option value="INR">Money (₹ INR)</option>
+            <option value="LAKH">Money (₹ Lakhs)</option>
+          </select>
+        </div>
+        <button class="btn-reset" id="btn-left-graphs" style="color:var(--cyan);border-color:var(--cyan);" onclick="toggleLeftGraphs()">◀ Full Report</button>
+        <button class="btn-reset" id="btn-kpi-toggle" onclick="toggleKpiRibbon()">▲ KPIs</button>
+        <button class="btn-red-flag" id="btn-red-flag-main" onclick="toggleHighlighterMode()">🖍️ Highlight</button>
+        <button class="btn-reset" style="color:var(--amber);border-color:var(--amber);" onclick="autoHighlightDeficits()">⚡ Auto</button>
+        <button class="btn-reset" id="btn-theme" onclick="toggleTheme()">☀️ White</button>
+        <button class="btn-reset" onclick="resetAllFilters()">Reset</button>
+      </div>
+    </div>
+
+    <div class="topbar-row-2">
+      <div class="tab-bar">
+        <button class="tab-btn yest-tab active" onclick="switchTab('yesterday', this)">1. Yesterday Performance</button>
+        <button class="tab-btn" onclick="switchTab('demand', this)">2. Prod Demand &amp; Asking Rate</button>
+        <button class="tab-btn" id="btn-tab-dispatch" style="border-color:var(--cyan);color:var(--cyan);" onclick="switchTab('dispatch', this)">3. Dispatch &amp; Asking Rate</button>
+        <button class="tab-btn rmpm-tab" onclick="switchTab('rmpm', this)">4. RMPM Supplier &amp; Stock</button>
+        <button class="tab-btn" onclick="switchTab('overview', this)">5. Minifactory &amp; S&amp;OP</button>
+        <button class="tab-btn" onclick="switchTab('stock', this)">6. MB52 Stock &amp; MB51</button>
+        <button class="tab-btn crit-tab" onclick="switchTab('critical', this)">7. Critical FG Review</button>
+        <button class="tab-btn act-tab" onclick="switchTab('actions', this)">8. Action Tracker</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="kpi-ribbon">
+    <div class="kpi-card">
+      <div class="kpi-top"><span id="kpi-plan-lbl">Production Plan (With BTS)</span><span class="badge blue" id="kpi-prorata-badge">PLAN</span></div>
+      <div class="kpi-val" id="kpi-plan">0</div>
+      <div class="kpi-sub"><span>Target Till Date:</span><strong id="kpi-target-td" style="color:var(--text-main)">0</strong></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-top"><span>Prod Till Date (101/102)</span><span class="badge green" id="kpi-ach-badge">0%</span></div>
+      <div class="kpi-val" id="kpi-prod">0</div>
+      <div class="kpi-sub"><span id="kpi-prod-sub">Yesterday: 0</span></div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-top"><span>Asking Rate / Day</span><span class="badge amber" id="kpi-rem-days">0d Left</span></div>
+      <div class="kpi-val" id="kpi-asking">0</div>
+      <div class="kpi-sub"><span id="kpi-ask-sub">Run Rate: 0</span></div>
+    </div>
+    <div class="kpi-card cyan">
+      <div class="kpi-top"><span>Dispatch (Yesterday / MTD)</span><span class="badge blue">601/602 + 641</span></div>
+      <div class="kpi-val" id="kpi-disp">0</div>
+      <div class="kpi-sub"><span id="kpi-disp-sub">Yest: 0 | 601: 0</span></div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-top"><span>Current Stock (MB52 Unr+QA)</span><span class="badge amber">MB52</span></div>
+      <div class="kpi-val" id="kpi-stock">0</div>
+      <div class="kpi-sub"><span id="kpi-stock-sub">Unrest: 0 | Qual: 0</span></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-top"><span>RMPM &amp; Vendor Adherence</span><span class="badge red">VENDOR</span></div>
+      <div class="kpi-val" id="kpi-rmpm-sched">0</div>
+      <div class="kpi-sub"><span id="kpi-rmpm-sub">Yest GRN: 0 | Gap: 0</span></div>
+    </div>
+  </section>
+
+  <main class="workspace">
+    <!-- TAB 1: YESTERDAY PERFORMANCE COMPLETE SNAPSHOT -->
+    <div id="view-yesterday" class="view-pane active">
+      <div class="yest-left-stack">
+        <div class="panel" style="flex-shrink:0;">
+          <div class="panel-hdr"><div class="panel-title">1. Yesterday Dispatch (MvT 601 + 641) &amp; Price Master Value</div><span class="badge blue">601 + 641</span></div>
+          <div class="yest-stat-grid" id="yest-sec-dispatch"></div>
+        </div>
+        <div class="panel" style="flex-shrink:0;">
+          <div class="panel-hdr"><div class="panel-title">2. Yesterday &amp; MTD Net Production (MvT 101/102)</div><span class="badge green">101/102 Net</span></div>
+          <div class="yest-stat-grid" id="yest-sec-prod"></div>
+        </div>
+        <div class="panel" style="flex:1;min-height:0;">
+          <div class="panel-hdr"><div class="panel-title">3. Key Raw Material Receipt (Monitored RMPM, MvT 101/102)</div><span class="badge amber" id="yest-rmpm-badge">RMPM</span></div>
+          <div class="panel-body">
+            <div class="tbl-wrap">
+              <table class="wrapped-report">
+                <colgroup><col style="width:18%"><col style="width:34%"><col style="width:18%"><col style="width:15%"><col style="width:15%"></colgroup>
+                <thead><tr><th>Part #</th><th>Raw Material Description</th><th>MF / Line</th><th class="num">Yesterday Recd</th><th class="num">MTD Recd</th></tr></thead>
+                <tbody id="tb-yest-rmpm-left"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-title clickable" onclick="openPopoutWithMode('YESTERDAY')" title="Click to expand">Yesterday Complete Snapshot &amp; Workbench <span>⛶ Popout</span></div>
+          <div class="panel-actions">
+            <button class="btn-xs active" id="btn-yest-prod" onclick="setYesterdaySubView('PROD', this)">🏭 1. How Much Produced?</button>
+            <button class="btn-xs" id="btn-yest-disp" onclick="setYesterdaySubView('DISPATCH', this)">🚚 2. How Much Dispatched?</button>
+            <button class="btn-xs" id="btn-yest-rmpm" onclick="setYesterdaySubView('RMPM', this)">📦 3. How Much RM Received?</button>
+            <button class="btn-xs" id="btn-yest-snap" onclick="setYesterdaySubView('SNAPSHOT', this)">📊 Executive Snapshot</button>
+            <button class="btn-xs" id="btn-yest-misses" onclick="setYesterdaySubView('MISSES', this)">⚠️ Misses &amp; Alerts</button>
+            <button class="btn-xs" id="btn-yest-all" onclick="setYesterdaySubView('ALL', this)">📋 All 3 Pillars</button>
+            <input type="text" id="inp-yest" placeholder="Search..." oninput="renderYesterdayTab()" style="width:110px;" />
+            <button class="btn-xs" onclick="exportCSV('tbl-yesterday', 'Yesterday_Performance.csv')">CSV</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="yest-snapshot-view" style="display:flex;flex-direction:column;gap:8px;padding:8px;overflow-y:auto;height:100%;"></div>
+          <div class="tbl-wrap" id="yest-table-wrap" style="display:none;"><table id="tbl-yesterday" class="wrapped-report"><colgroup id="cg-yesterday"></colgroup><thead id="th-yesterday"></thead><tbody id="tb-yesterday"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: DEMAND (PRODUCTION) -->
+    <div id="view-demand" class="view-pane">
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Material-Wise Monthly Plan vs Target Till Date vs Production</div><button class="btn-xs" onclick="toggleLeftGraphs()">◀ Hide</button></div><div class="panel-body"><div id="ch-dem-part" class="svg-chart-wrap"></div></div></div>
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Line-Wise Current Run Rate vs Required Asking Rate</div></div><div class="panel-body"><div id="ch-dem-line" class="svg-chart-wrap"></div></div></div>
+      <div class="panel span-2-rows">
+        <div class="panel-hdr">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn-xs" onclick="toggleLeftGraphs()">◀ Full Report</button>
+            <div class="panel-title clickable" onclick="openPopoutWithMode('DEMAND')">Automated Production &amp; Demand Review Report <span>⛶ Popout</span></div>
+          </div>
+          <div class="panel-actions">
+            <button class="btn-xs" style="color:var(--cyan);border-color:var(--cyan);" onclick="switchTab('dispatch', document.getElementById('btn-tab-dispatch'))">🚚 Switch to Dispatch &rarr;</button>
+            <input type="text" id="inp-demand" placeholder="Search Part / Desc / Cust..." oninput="renderDemandTable()" style="width:155px;" />
+            <button class="btn-xs" onclick="exportCSV('tbl-demand', 'Demand_Review_Report.csv')">CSV</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="tbl-wrap">
+            <table id="tbl-demand" class="wrapped-report">
+              <colgroup><col style="width:6.8%"><col style="width:11.5%"><col style="width:6.2%"><col style="width:6.5%"><col style="width:6.0%"><col style="width:6.0%"><col style="width:7.2%"><col style="width:5.5%"><col style="width:5.8%"><col style="width:6.2%"><col style="width:5.8%"><col style="width:5.8%"><col style="width:5.8%"><col style="width:6.0%"><col style="width:8.9%"></colgroup>
+              <thead><tr><th>Part Number</th><th>Description</th><th>Customer</th><th>MF / Line</th><th class="num" id="th-dem-plan">Monthly Plan (With BTS)</th><th class="num">Target Till Date</th><th class="num">Sum of Quantity in UnE (Prod Till Date)</th><th class="num">Current Stock</th><th class="num">% Achievement</th><th class="num">Pending for Production</th><th class="num">Yesterday Production</th><th class="num">Current Run Rate</th><th class="num">Asking Rate</th><th class="num">% Achievement Monthly</th><th>Remarks</th></tr></thead>
+              <tbody id="tb-demand"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: DISPATCH & ASKING RATE -->
+    <div id="view-dispatch" class="view-pane">
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Material-Wise Plan vs TTD vs Dispatch (601 + 641)</div><button class="btn-xs" onclick="toggleLeftGraphs()">◀ Hide</button></div><div class="panel-body"><div id="ch-disp-part" class="svg-chart-wrap"></div></div></div>
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Customer-Wise Dispatch Run Rate vs Asking Rate / Day</div></div><div class="panel-body"><div id="ch-disp-cust" class="svg-chart-wrap"></div></div></div>
+      <div class="panel span-2-rows">
+        <div class="panel-hdr">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn-xs" onclick="toggleLeftGraphs()">◀ Full Report</button>
+            <div class="panel-title clickable" onclick="openPopoutWithMode('DEMAND')">Automated Dispatch &amp; Asking Rate Review Report (MvT 601 + 641) <span>⛶ Popout</span></div>
+          </div>
+          <div class="panel-actions">
+            <input type="text" id="inp-dispatch" placeholder="Search Part / Desc / Cust..." oninput="renderDispatchTable()" style="width:155px;" />
+            <button class="btn-xs" onclick="exportCSV('tbl-dispatch', 'Dispatch_Review_Report.csv')">CSV</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="tbl-wrap">
+            <table id="tbl-dispatch" class="wrapped-report">
+              <colgroup><col style="width:6.5%"><col style="width:10.5%"><col style="width:6.2%"><col style="width:6.2%"><col style="width:5.5%"><col style="width:5.5%"><col style="width:6.0%"><col style="width:5.2%"><col style="width:5.2%"><col style="width:5.2%"><col style="width:5.2%"><col style="width:5.8%"><col style="width:5.5%"><col style="width:5.2%"><col style="width:5.5%"><col style="width:5.2%"><col style="width:5.6%"></colgroup>
+              <thead><tr><th>Part Number</th><th>Description</th><th>Customer</th><th>MF / Line</th><th class="num" id="th-disp-plan">Monthly Plan</th><th class="num">Target Till Date</th><th class="num">Disp Till Date (601+641)</th><th class="num">Cust (601)</th><th class="num">STO (641)</th><th class="num">Stock (MB52)</th><th class="num">% Ach TTD</th><th class="num">Pending Dispatch</th><th class="num">Yesterday Dispatch</th><th class="num">Disp Run Rate</th><th class="num">Disp Asking Rate</th><th class="num">% Monthly</th><th>Remarks</th></tr></thead>
+              <tbody id="tb-dispatch"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: RMPM -->
+    <div id="view-rmpm" class="view-pane">
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Daily Supplier Schedule vs RMPM Receipt (Vendor.xlsx vs MB51 101/102)</div></div><div class="panel-body"><div id="ch-rmpm-date" class="svg-chart-wrap"></div></div></div>
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Monitored RMPM: Schedule vs Received vs MB52 Stock</div></div><div class="panel-body"><div id="ch-rmpm-part" class="svg-chart-wrap"></div></div></div>
+      <div class="panel span-2-rows">
+        <div class="panel-hdr">
+          <div class="panel-title">Monitored RMPM Supplier Schedule &amp; Stock Position</div>
+          <div class="panel-actions">
+            <input type="text" id="inp-rmpm" placeholder="Filter Part / Desc / Line..." oninput="renderRmpmTables()" style="width:150px;" />
+            <select id="sel-rmpm-tbl" onchange="renderRmpmTables()"><option value="SUMMARY">Part Summary</option><option value="SCHEDULE">Date-Wise Vendor Schedule</option></select>
+            <button class="btn-xs" onclick="exportCSV('tbl-rmpm', 'RMPM_Supplier_Stock.csv')">CSV</button>
+          </div>
+        </div>
+        <div class="panel-body"><div class="tbl-wrap"><table id="tbl-rmpm"><thead id="th-rmpm"></thead><tbody id="tb-rmpm"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: OVERVIEW -->
+    <div id="view-overview" class="view-pane">
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Minifactory Performance: Monthly Plan vs Target Till Date vs Production</div></div><div class="panel-body"><div id="ch-ov-mf" class="svg-chart-wrap"></div></div></div>
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">MB51 Daily Production (101/102) &amp; Dispatch (601/602 &amp; 641)</div></div><div class="panel-body"><div id="ch-ov-daily" class="svg-chart-wrap"></div></div></div>
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Customer Wise Monthly Plan vs Target Till Date vs Production</div></div><div class="panel-body"><div id="ch-ov-cust" class="svg-chart-wrap"></div></div></div>
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">Monitored RMPM: Supplier Schedule vs MB51 Receipt vs MB52 Stock</div></div><div class="panel-body"><div id="ch-ov-rmpm" class="svg-chart-wrap"></div></div></div>
+    </div>
+
+    <!-- TAB 5: STOCK -->
+    <div id="view-stock" class="view-pane">
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">MB52 Total Stock (Unrestricted + Quality Insp.) by Minifactory &amp; Type</div></div><div class="panel-body"><div id="ch-stk-mf" class="svg-chart-wrap"></div></div></div>
+      <div class="panel"><div class="panel-hdr"><div class="panel-title">MB52 Stock Breakdown: Unrestricted vs Quality Insp. vs Blocked vs Transit</div></div><div class="panel-body"><div id="ch-stk-split" class="svg-chart-wrap"></div></div></div>
+      <div class="panel span-2-rows">
+        <div class="panel-hdr">
+          <div class="panel-title">MB52 Stock Position &amp; MB51 Movement Ledger</div>
+          <div class="panel-actions">
+            <input type="text" id="inp-stock" placeholder="Search Part / Desc..." oninput="renderStockAndMb51Table()" style="width:140px;" />
+            <select id="sel-stk-type" onchange="renderStockAndMb51Table()">
+              <option value="MB52_ALL">MB52 Stock (All)</option><option value="MB52_RMPM">MB52 Stock (RMPM Only)</option>
+              <option value="MB52_FG">MB52 Stock (FG Only)</option><option value="MB51_ALL">MB51 Movements</option>
+            </select>
+            <button class="btn-xs" onclick="exportCSV('tbl-stock', 'Stock_Ledger.csv')">CSV</button>
+          </div>
+        </div>
+        <div class="panel-body"><div class="tbl-wrap"><table id="tbl-stock"><thead id="th-stock"></thead><tbody id="tb-stock"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- TAB 6: CRITICAL FG REVIEW -->
+    <div id="view-critical" class="view-pane">
+      <div class="panel">
+        <div class="panel-hdr">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span class="panel-title" style="font-size:13px;">Critical FG Review &mdash; Ranked by Pending Value</span>
+            <span id="crit-cover-lbl" style="font-size:12px;font-weight:800;color:var(--amber);"></span>
+          </div>
+          <div class="panel-actions">
+            <span class="slicer-lbl">Show:</span>
+            <select id="sel-crit-top" onchange="renderCriticalTab()" style="font-size:12px;font-weight:700;">
+              <option value="5">Top 5</option><option value="10" selected>Top 10</option><option value="15">Top 15</option>
+              <option value="20">Top 20</option><option value="25">Top 25</option><option value="50">Top 50</option><option value="0">All</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-main);cursor:pointer;font-weight:700;">
+              <input type="checkbox" id="chk-crit-hide-normal" onchange="renderCriticalTab()" /> Hide ✓ Normal (In Control)
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-main);cursor:pointer;">
+              <input type="checkbox" id="chk-crit-help" onchange="renderCriticalTab()" /> Need Escalation only
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-main);cursor:pointer;">
+              <input type="checkbox" id="chk-crit-open" onchange="renderCriticalTab()" /> Open/In-progress only
+            </label>
+            <input type="text" id="inp-crit" placeholder="Search Desc / MF / Cust..." oninput="renderCriticalTab()" style="width:155px;" />
+            <button class="btn-xs" onclick="switchTab('actions', document.querySelector('.act-tab'))">📅 Action Tracker &rarr;</button>
+            <button class="btn-xs" onclick="exportCSV('tbl-critical', 'Critical_FG_Review.csv')">CSV</button>
+            <span class="badge green" id="crit-srv-badge">● Auto-save Ready</span>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="tbl-wrap">
+            <table id="tbl-critical" class="wrapped-report">
+              <colgroup>
+                <col style="width:3.2%"><col style="width:9.5%"><col style="width:18.5%"><col style="width:9.5%">
+                <col style="width:6.8%"><col style="width:6.8%"><col style="width:8.0%"><col style="width:5.5%">
+                <col style="width:8.5%"><col style="width:6.0%"><col style="width:11.7%"><col style="width:6.0%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>#</th><th>MF / Line</th><th>Description</th><th>Customer</th>
+                  <th class="num">Plan Qty</th><th class="num">Actual Qty</th>
+                  <th class="num">Pending Value</th><th class="num">% Ach</th>
+                  <th>Control</th><th>Need Escalation</th><th>Latest Stakeholder Input</th><th>Log (+) / Drilldown</th>
+                </tr>
+              </thead>
+              <tbody id="tb-critical"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 7: ACTION TRACKER & FOLLOW-UP SCHEDULE -->
+    <div id="view-actions" class="view-pane">
+      <div class="panel">
+        <div class="panel-hdr">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span class="panel-title" style="font-size:13px;">📅 Stakeholder Action Tracker &amp; Follow-up Schedule (Sorted by Target Date)</span>
+            <span class="badge amber" id="act-summary-badge">0 Open Actions</span>
+          </div>
+          <div class="panel-actions">
+            <span class="slicer-lbl">Timeline:</span>
+            <select id="sel-act-due" onchange="renderActionTrackerTab()" style="font-size:11.5px;font-weight:700;">
+              <option value="ALL">All Target Dates</option>
+              <option value="OVERDUE">Overdue Only</option>
+              <option value="DUE_SOON">Due Today / Next 3 Days</option>
+              <option value="UPCOMING">Upcoming (&gt;3 Days)</option>
+              <option value="NO_DATE">No Target Date</option>
+            </select>
+            <span class="slicer-lbl">Status:</span>
+            <select id="sel-act-status" onchange="renderActionTrackerTab()" style="font-size:11.5px;font-weight:700;">
+              <option value="OPEN_ONLY" selected>Open &amp; In Progress</option>
+              <option value="ALL">All Statuses</option>
+              <option value="Closed">Closed Only</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-main);cursor:pointer;font-weight:700;">
+              <input type="checkbox" id="chk-act-esc" onchange="renderActionTrackerTab()" /> Need Escalation Only
+            </label>
+            <input type="text" id="inp-act-search" placeholder="Search Owner / FG / Input..." oninput="renderActionTrackerTab()" style="width:165px;" />
+            <button class="btn-xs" onclick="exportCSV('tbl-actions', 'Action_Tracker_Followup.csv')">Export CSV</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="tbl-wrap">
+            <table id="tbl-actions" class="wrapped-report">
+              <colgroup>
+                <col style="width:8.5%"><col style="width:7.5%"><col style="width:9.5%"><col style="width:14.5%">
+                <col style="width:9.5%"><col style="width:8.0%"><col style="width:15.5%"><col style="width:15.5%">
+                <col style="width:5.5%"><col style="width:6.0%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Follow-up Due</th><th>Target Date</th><th>MF / Line</th><th>FG Description</th>
+                  <th>Stakeholder / Owner</th><th>Category</th><th>Stakeholder Input / Root Cause</th>
+                  <th>Action Being Taken</th><th>Need Escalation</th><th>Action Status / Drill</th>
+                </tr>
+              </thead>
+              <tbody id="tb-actions"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const D = __DATA_PAYLOAD__;
+const SERVER_URL = "__SERVER_URL__";
+const COMMENTS_LOG = D.comments || [];
+const COMMENT_API_URL = (SERVER_URL && !SERVER_URL.includes('__SERVER_URL__')) ? (SERVER_URL + '/api/comments') : 'http://127.0.0.1:8765/api/comments';
+
+let activeTab = 'yesterday';
+let unitMode = 'QTY';
+let btsMode = 'WITH_BTS';
+let selectedMf = 'ALL';
+let selectedLine = 'ALL';
+let selectedCustomer = 'ALL';
+let yesterdaySubView = 'PROD';
+let popoutReportMode = 'DEMAND';
+let currentDrillPart = '';
+let drillChartMode = 'VAL';
+let currentTheme = 'dark';
+let highlighterActive = false;
+let openInlinePart = null;
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, isErr) {
+  const t = document.getElementById('save-toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'save-toast show' + (isErr ? ' err' : '');
+  setTimeout(() => { t.className = 'save-toast'; }, 3200);
+}
+
+function toggleHighlighterMode() {
+  highlighterActive = !highlighterActive;
+  document.body.classList.toggle('highlighter-active', highlighterActive);
+  ['btn-red-flag-main', 'btn-red-flag-pop'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.classList.toggle('active', highlighterActive);
+  });
+}
+
+function clearRedHighlights() {
+  document.querySelectorAll('tr.red-highlighted, .kpi-card.red-highlighted').forEach(el => {
+    el.classList.remove('red-highlighted');
+  });
+}
+const clearAllHighlights = clearRedHighlights;
+
+function autoHighlightDeficits() {
+  clearRedHighlights();
+  document.querySelectorAll('tr[data-deficit="true"]').forEach(tr => {
+    tr.classList.add('red-highlighted');
+  });
+}
+
+function toggleLeftGraphs() {
+  document.body.classList.toggle('left-collapsed');
+  const isCol = document.body.classList.contains('left-collapsed');
+  const b = document.getElementById('btn-left-graphs');
+  if (b) b.textContent = isCol ? '▶ Show Graphs' : '◀ Full Report';
+  setTimeout(() => renderDashboard(), 50);
+}
+
+function toggleKpiRibbon() {
+  document.body.classList.toggle('kpi-collapsed');
+  const isCol = document.body.classList.contains('kpi-collapsed');
+  const b = document.getElementById('btn-kpi-toggle');
+  if (b) b.textContent = isCol ? '▼ KPIs' : '▲ KPIs';
+}
+
+function toggleTheme() {
+  currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+  if (currentTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  const label = (currentTheme === 'light') ? '🌙 Dark' : '☀️ White';
+  const b1 = document.getElementById('btn-theme');
+  if (b1) b1.textContent = label;
+  renderDashboard();
+}
+
+function syncBtsMode(val) {
+  btsMode = val;
+  const s1 = document.getElementById('sel-bts');
+  const s2 = document.getElementById('sel-bts-popout');
+  if (s1 && s1.value !== val) s1.value = val;
+  if (s2 && s2.value !== val) s2.value = val;
+  const subB = document.getElementById('popout-sub-badge');
+  if (subB) subB.textContent = val === 'WITH_BTS' ? 'With BTS' : 'Without BTS';
+  renderDashboard();
+}
+
+function syncUnitMode(val) {
+  unitMode = val;
+  const s1 = document.getElementById('sel-mode');
+  const s2 = document.getElementById('sel-mode-popout');
+  if (s1 && s1.value !== val) s1.value = val;
+  if (s2 && s2.value !== val) s2.value = val;
+  renderDashboard();
+}
+
+function updateHeaderSubtitle() {
+  const hc = document.getElementById('hdr-cutoff');
+  const hcal = document.getElementById('hdr-cal');
+  if (hc) hc.textContent = `Data Cutoff: ${D.meta.cutoff_date || 'N/A'}`;
+  if (hcal) hcal.textContent = `Working Days: ${D.meta.elapsed_working_days}/${D.meta.total_working_days} (${D.meta.prorata_pct}% Elapsed | ${D.meta.remaining_working_days}d Left)`;
+}
+
+function initDashboard() {
+  if (!D || !D.meta) return;
+  updateHeaderSubtitle();
+
+  const selYestDate = document.getElementById('sel-yest-date');
+  if (selYestDate && D.meta.mb51_dates && D.meta.mb51_dates.length > 0) {
+    selYestDate.innerHTML = '';
+    D.meta.mb51_dates.forEach(dObj => {
+      const opt = document.createElement('option');
+      opt.value = dObj.iso;
+      opt.textContent = `${dObj.display} (Disp:${Math.round(dObj.disp_qty).toLocaleString('en-IN')} | Prod:${Math.round(dObj.prod_qty).toLocaleString('en-IN')})`;
+      if (dObj.iso === D.meta.latest_date_iso) opt.selected = true;
+      selYestDate.appendChild(opt);
+    });
+  }
+
+  const selMode = document.getElementById('sel-mode');
+  const selPopMode = document.getElementById('sel-mode-popout');
+  if (D.meta.fx_list && D.meta.fx_list.length > 0) {
+    D.meta.fx_list.forEach((fx, idx) => {
+      const opt = document.createElement('option');
+      opt.value = 'FX_' + idx;
+      opt.textContent = `${fx.from} (@ ${fx.rate})`;
+      if (selMode) selMode.appendChild(opt);
+      if (selPopMode) selPopMode.appendChild(opt.cloneNode(true));
+    });
+  }
+
+  const selMf = document.getElementById('sel-mf');
+  (D.meta.minifactories || []).forEach(mf => {
+    const o = document.createElement('option'); o.value = mf; o.textContent = mf; selMf.appendChild(o);
+  });
+  populateLineDropdown();
+
+  const selCust = document.getElementById('sel-cust');
+  (D.meta.customers || []).forEach(c => {
+    const o = document.createElement('option'); o.value = c; o.textContent = c; selCust.appendChild(o);
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.chk-dd')) {
+      document.querySelectorAll('.chk-dd-menu.open').forEach(m => m.classList.remove('open'));
+    }
+    if (!highlighterActive) return;
+    if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input') || e.target.closest('textarea')) return;
+    const row = e.target.closest('tbody tr');
+    if (row && !row.classList.contains('inline-log-row')) {
+      row.classList.toggle('red-highlighted');
+      return;
+    }
+    const card = e.target.closest('.kpi-card');
+    if (card) card.classList.toggle('red-highlighted');
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeDemandPopout();
+      closeFgDrill();
+    }
+  });
+
+  renderDashboard();
+}
+
+function onYesterdayDateChange(val) {
+  const sel = document.getElementById('sel-yest-date');
+  const newIso = val || (sel ? sel.value : '');
+  if (!newIso) return;
+  D.meta.latest_date_iso = newIso;
+  const parts = newIso.split('-');
+  const dispDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : newIso;
+  D.meta.cutoff_date = dispDate;
+
+  const totW = Math.max(1, D.meta.total_working_days || 25);
+  let elapW = (D.calendar || []).filter(c => c.date <= newIso && c.is_working === 1).length;
+  if (elapW <= 0) elapW = 1;
+  D.meta.elapsed_working_days = elapW;
+  D.meta.remaining_working_days = Math.max(0, totW - elapW);
+  D.meta.prorata_pct = Number(((elapW / totW) * 100).toFixed(1));
+  updateHeaderSubtitle();
+
+  const yProd = {}, y601 = {}, y641 = {}, yGrnQ = {}, yGrnV = {};
+  (D.mb51 || []).forEach(x => {
+    if (x.date !== newIso) return;
+    if (x.mvt === 101 || x.mvt === 102) {
+      yProd[x.part] = (yProd[x.part] || 0) + x.qty;
+      yGrnQ[x.part] = (yGrnQ[x.part] || 0) + x.qty;
+      yGrnV[x.part] = (yGrnV[x.part] || 0) + x.val;
+    } else if (x.mvt === 601 || x.mvt === 602) {
+      y601[x.part] = (y601[x.part] || 0) + x.qty;
+    } else if (x.mvt === 641) {
+      y641[x.part] = (y641[x.part] || 0) + x.qty;
+    }
+  });
+
+  (D.demand || []).forEach(r => {
+    const yp = yProd[r.part] || 0;
+    const d601 = y601[r.part] || 0;
+    const d641 = y641[r.part] || 0;
+    const dtot = d601 + d641;
+    r.yest_prod_qty = yp;
+    r.yest_prod_val = yp * (r.price || 0);
+    r.yest_disp_601_qty = d601;
+    r.yest_disp_601_val = d601 * (r.price || 0);
+    r.yest_disp_641_qty = d641;
+    r.yest_disp_641_val = d641 * (r.price || 0);
+    r.yest_disp_qty = dtot;
+    r.yest_disp_val = dtot * (r.price || 0);
+  });
+
+  const vDateSched = {};
+  (D.vendor_schedule || []).forEach(v => {
+    if (v.date === newIso) vDateSched[v.part] = (vDateSched[v.part] || 0) + v.sched_qty;
+  });
+
+  (D.rmpm_parts || []).forEach(rm => {
+    const exactS = vDateSched[rm.part] || 0;
+    const planQ = exactS > 0 ? exactS : (rm.sched_total_qty / totW);
+    const gQ = yGrnQ[rm.part] || 0;
+    const gV = yGrnV[rm.part] || (gQ * rm.unit_val);
+    const gapQ = Math.max(0, planQ - gQ);
+    rm.sched_yest_qty = planQ;
+    rm.sched_yest_val = planQ * rm.unit_val;
+    rm.yest_grn_qty = gQ;
+    rm.yest_grn_val = gV;
+    rm.yest_gap_qty = gapQ;
+    rm.yest_gap_val = gapQ * rm.unit_val;
+  });
+
+  renderDashboard();
+}
+
+function populateLineDropdown() {
+  const mf = document.getElementById('sel-mf').value;
+  const selLine = document.getElementById('sel-line');
+  const prev = selLine.value;
+  selLine.innerHTML = '<option value="ALL">All</option>';
+  const lineSet = new Set();
+  if (mf === 'ALL') {
+    (D.meta.lines || []).forEach(l => lineSet.add(l));
+  } else {
+    (D.demand || []).filter(r => r.minifactory === mf && r.line).forEach(r => lineSet.add(r.line));
+    (D.mb52 || []).filter(r => r.minifactory === mf && r.line).forEach(r => lineSet.add(r.line));
+  }
+  Array.from(lineSet).sort().forEach(l => {
+    const o = document.createElement('option'); o.value = l; o.textContent = l; selLine.appendChild(o);
+  });
+  if (Array.from(lineSet).includes(prev)) selLine.value = prev;
+}
+
+function onMfChange() {
+  populateLineDropdown();
+  renderDashboard();
+}
+
+function resetAllFilters() {
+  document.getElementById('sel-mf').value = 'ALL';
+  populateLineDropdown();
+  document.getElementById('sel-line').value = 'ALL';
+  document.getElementById('sel-cust').value = 'ALL';
+  syncBtsMode('WITH_BTS');
+  syncUnitMode('QTY');
+  ['inp-yest','inp-demand','inp-rmpm','inp-stock','inp-demand-popout','inp-crit','inp-act-search'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  clearRedHighlights();
+  renderDashboard();
+}
+
+function switchTab(tabId, btn) {
+  activeTab = tabId;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('view-' + tabId);
+  if (target) target.classList.add('active');
+  renderDashboard();
+}
+
+function setYesterdaySubView(mode, btn) {
+  yesterdaySubView = mode;
+  ['btn-yest-prod','btn-yest-disp','btn-yest-rmpm','btn-yest-snap','btn-yest-all','btn-yest-fg','btn-yest-misses'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.remove('active');
+  });
+  if (btn) btn.classList.add('active');
+  renderYesterdayTab();
+}
+
+function pick(qty, valInr) {
+  const q = Number(qty) || 0;
+  const v = Number(valInr) || 0;
+  if (unitMode === 'QTY') return q;
+  if (unitMode === 'INR') return v;
+  if (unitMode === 'LAKH') return v / 100000.0;
+  if (unitMode.startsWith('FX_')) {
+    const idx = parseInt(unitMode.split('_')[1], 10);
+    const fx = (D.meta.fx_list || [])[idx];
+    const rate = (fx && fx.rate > 0) ? fx.rate : 1.0;
+    return v / rate;
+  }
+  return q;
+}
+
+function fmt(num) {
+  const n = Number(num) || 0;
+  if (unitMode === 'QTY') return n.toLocaleString('en-IN', {maximumFractionDigits: 0});
+  if (unitMode === 'INR') return '₹' + n.toLocaleString('en-IN', {maximumFractionDigits: 0});
+  if (unitMode === 'LAKH') return '₹' + n.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' L';
+  if (unitMode.startsWith('FX_')) {
+    const idx = parseInt(unitMode.split('_')[1], 10);
+    const fx = (D.meta.fx_list || [])[idx];
+    const sym = fx ? fx.from + ' ' : '';
+    return sym + n.toLocaleString('en-IN', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+  }
+  return n.toLocaleString('en-IN', {maximumFractionDigits: 1});
+}
+
+function fmtCompact(num) {
+  const n = Number(num) || 0;
+  const abs = Math.abs(n);
+  if (unitMode === 'QTY') {
+    if (abs >= 1e6) return (n/1e6).toFixed(2) + 'M';
+    if (abs >= 1e3) return (n/1e3).toFixed(1) + 'K';
+    return n.toFixed(0);
+  }
+  if (unitMode === 'INR') {
+    if (abs >= 1e7) return '₹' + (n/1e7).toFixed(2) + 'Cr';
+    if (abs >= 1e5) return '₹' + (n/1e5).toFixed(2) + 'L';
+    if (abs >= 1e3) return '₹' + (n/1e3).toFixed(1) + 'K';
+    return '₹' + n.toFixed(0);
+  }
+  if (unitMode === 'LAKH') return '₹' + n.toFixed(1) + 'L';
+  return n.toFixed(1);
+}
+
+function calcPartMetrics(r) {
+  const totDays = Math.max(1, D.meta.total_working_days || 25);
+  const elapDays = Math.max(0, D.meta.elapsed_working_days || 0);
+  const remDays = Math.max(0, D.meta.remaining_working_days || 0);
+  const prorataRatio = elapDays / totDays;
+
+  const planQ = (btsMode === 'WITH_BTS') ? r.plan_with_bts_qty : r.plan_without_bts_qty;
+  const planV = (btsMode === 'WITH_BTS') ? r.plan_with_bts_val : r.plan_without_bts_val;
+  const ttdQ = planQ * prorataRatio;
+  const ttdV = planV * prorataRatio;
+  const prodQ = r.prod_td_qty;
+  const prodV = r.prod_td_val;
+  const pendQ = Math.max(0, planQ - prodQ);
+  const pendV = Math.max(0, planV - prodV);
+  const runRateQ = elapDays > 0 ? (prodQ / elapDays) : 0;
+  const runRateV = elapDays > 0 ? (prodV / elapDays) : 0;
+  const askRateQ = remDays > 0 ? (pendQ / remDays) : pendQ;
+  const askRateV = remDays > 0 ? (pendV / remDays) : pendV;
+  const yestPlanQ = planQ / totDays;
+  const yestPlanV = planV / totDays;
+
+  const pctAchTd = ttdQ > 0 ? (prodQ / ttdQ * 100.0) : (prodQ > 0 ? 100.0 : 0.0);
+  const pctAchMon = planQ > 0 ? (prodQ / planQ * 100.0) : (prodQ > 0 ? 100.0 : 0.0);
+  const pctYestProd = yestPlanQ > 0 ? (r.yest_prod_qty / yestPlanQ * 100.0) : (r.yest_prod_qty > 0 ? 100.0 : 0.0);
+  const pctYestDisp = yestPlanQ > 0 ? (r.yest_disp_qty / yestPlanQ * 100.0) : (r.yest_disp_qty > 0 ? 100.0 : 0.0);
+
+  let remStr = r.sheet_remarks || '';
+  if (!remStr) {
+    if (planQ <= 0 && prodQ > 0) remStr = 'Unplanned Prod';
+    else if (planQ <= 0) remStr = 'No Plan';
+    else if (prodQ >= planQ) remStr = 'Monthly Target Met';
+    else if (pctAchTd >= 100) remStr = 'On Track';
+    else if (pctAchTd >= 85) remStr = 'Slight Lag';
+    else if (prodQ === 0) remStr = 'Zero Production';
+    else remStr = 'Critical Deficit';
+  }
+  return {
+    planQ, planV, ttdQ, ttdV, prodQ, prodV, pendQ, pendV,
+    runRateQ, runRateV, askRateQ, askRateV, yestPlanQ, yestPlanV,
+    pctAchTd, pctAchMon, pctYestProd, pctYestDisp, remStr
+  };
+}
+
+function getFilteredData() {
+  selectedMf = document.getElementById('sel-mf').value;
+  selectedLine = document.getElementById('sel-line').value;
+  selectedCustomer = document.getElementById('sel-cust').value;
+
+  const fDemand = (D.demand || []).filter(r =>
+    (selectedMf === 'ALL' || r.minifactory === selectedMf) &&
+    (selectedLine === 'ALL' || r.line === selectedLine) &&
+    (selectedCustomer === 'ALL' || r.customer === selectedCustomer)
+  );
+  const fRmpmParts = (D.rmpm_parts || []).filter(r =>
+    (selectedMf === 'ALL' || !r.minifactory || r.minifactory === selectedMf) &&
+    (selectedLine === 'ALL' || !r.line || r.line === selectedLine)
+  );
+  const fVendorSched = (D.vendor_schedule || []).filter(r =>
+    (selectedMf === 'ALL' || !r.minifactory || r.minifactory === selectedMf) &&
+    (selectedLine === 'ALL' || !r.line || r.line === selectedLine)
+  );
+  const fMb51 = (D.mb51 || []).filter(r =>
+    (selectedMf === 'ALL' || r.minifactory === selectedMf) &&
+    (selectedLine === 'ALL' || r.line === selectedLine) &&
+    (selectedCustomer === 'ALL' || !r.customer || r.customer === selectedCustomer)
+  );
+  const fMb52 = (D.mb52 || []).filter(r =>
+    (selectedMf === 'ALL' || r.minifactory === selectedMf) &&
+    (selectedLine === 'ALL' || r.line === selectedLine)
+  );
+  return { fDemand, fRmpmParts, fVendorSched, fMb51, fMb52 };
+}
+
+function calcDispatchMetrics(r) {
+  const totDays = Math.max(1, D.meta.total_working_days || 25);
+  const elapDays = Math.max(0, D.meta.elapsed_working_days || 0);
+  const remDays = Math.max(0, D.meta.remaining_working_days || 0);
+  const prorataRatio = elapDays / totDays;
+
+  const planQ = (btsMode === 'WITH_BTS') ? r.plan_with_bts_qty : r.plan_without_bts_qty;
+  const planV = (btsMode === 'WITH_BTS') ? r.plan_with_bts_val : r.plan_without_bts_val;
+  const ttdQ = planQ * prorataRatio;
+  const ttdV = planV * prorataRatio;
+  const dispQ = r.total_disp_qty || ((r.disp_601_qty || 0) + (r.disp_641_qty || 0));
+  const dispV = r.total_disp_val || ((r.disp_601_val || 0) + (r.disp_641_val || 0));
+  const pendDispQ = Math.max(0, planQ - dispQ);
+  const pendDispV = Math.max(0, planV - dispV);
+  const runRateQ = elapDays > 0 ? (dispQ / elapDays) : 0;
+  const runRateV = elapDays > 0 ? (dispV / elapDays) : 0;
+  const askRateQ = remDays > 0 ? (pendDispQ / remDays) : pendDispQ;
+  const askRateV = remDays > 0 ? (pendDispV / remDays) : pendDispV;
+
+  const pctAchTd = ttdQ > 0 ? (dispQ / ttdQ * 100.0) : (dispQ > 0 ? 100.0 : 0.0);
+  const pctAchMon = planQ > 0 ? (dispQ / planQ * 100.0) : (dispQ > 0 ? 100.0 : 0.0);
+
+  let remStr = '';
+  if (planQ <= 0 && dispQ > 0) remStr = 'Unplanned Dispatch';
+  else if (planQ <= 0) remStr = 'No Dispatch Plan';
+  else if (dispQ >= planQ) remStr = 'Monthly Target Met';
+  else if (pctAchTd >= 100) remStr = 'On Track vs TTD';
+  else if (r.stock_total_qty >= Math.max(0, ttdQ - dispQ) && r.stock_total_qty > 0) remStr = 'Ready to Ship (In Stock)';
+  else if (pctAchTd >= 85) remStr = 'Slight Dispatch Lag';
+  else if (dispQ === 0) remStr = 'Zero Dispatch Logged';
+  else remStr = 'Behind TTD — Expedite';
+
+  return {
+    planQ, planV, ttdQ, ttdV, dispQ, dispV, pendDispQ, pendDispV,
+    runRateQ, runRateV, askRateQ, askRateV, pctAchTd, pctAchMon, remStr
+  };
+}
+
+function renderDashboard() {
+  const f = getFilteredData();
+  updateKPIs(f);
+  if (activeTab === 'yesterday') renderYesterdayTab(f);
+  else if (activeTab === 'demand') renderDemandTab(f);
+  else if (activeTab === 'dispatch') renderDispatchTab(f);
+  else if (activeTab === 'rmpm') renderRmpmTab(f);
+  else if (activeTab === 'overview') renderOverviewTab(f);
+  else if (activeTab === 'stock') renderStockTab(f);
+  else if (activeTab === 'critical') renderCriticalTab(f);
+  else if (activeTab === 'actions') renderActionTrackerTab();
+  const pm = document.getElementById('demand-popout-modal');
+  if (pm && pm.classList.contains('open')) renderPopoutTable();
+}
+
+function updateKPIs({ fDemand, fRmpmParts, fMb51, fMb52 }) {
+  let totPlan = 0, totTtd = 0, totProd = 0, totYestProd = 0, totRun = 0, totAsk = 0;
+  let totDisp = 0, totDisp601 = 0, totYestDisp = 0;
+
+  fDemand.forEach(r => {
+    const m = calcPartMetrics(r);
+    totPlan += pick(m.planQ, m.planV);
+    totTtd += pick(m.ttdQ, m.ttdV);
+    totProd += pick(m.prodQ, m.prodV);
+    totYestProd += pick(r.yest_prod_qty, r.yest_prod_val);
+    totRun += pick(m.runRateQ, m.runRateV);
+    totAsk += pick(m.askRateQ, m.askRateV);
+    totDisp += pick(r.total_disp_qty, r.total_disp_val);
+    totDisp601 += pick(r.disp_601_qty, r.disp_601_val);
+    totYestDisp += pick(r.yest_disp_qty, r.yest_disp_val);
+  });
+
+  if (totDisp === 0 && fMb51.length > 0) {
+    const latestIso = D.meta.latest_date_iso;
+    fMb51.forEach(r => {
+      if (r.mvt === 601 || r.mvt === 602 || r.mvt === 641) {
+        if (r.date <= latestIso) {
+          const v = pick(r.qty, r.price_val || r.val);
+          totDisp += v;
+          if (r.mvt === 601 || r.mvt === 602) totDisp601 += v;
+        }
+        if (r.date === latestIso) totYestDisp += pick(r.qty, r.price_val || r.val);
+      }
+    });
+  }
+
+  let totStock = 0, totUnrest = 0, totQual = 0;
+  fMb52.forEach(r => {
+    totStock += pick(r.total_qty, r.total_val);
+    totUnrest += pick(r.unrest_qty, r.unrest_val);
+    totQual += pick(r.qual_qty, r.qual_val);
+  });
+
+  let totRmSched = 0, totRmYestGrn = 0, totRmGap = 0;
+  fRmpmParts.forEach(r => {
+    totRmSched += pick(r.sched_total_qty, r.sched_total_val);
+    totRmYestGrn += pick(r.yest_grn_qty, r.yest_grn_val);
+    totRmGap += pick(r.gap_total_qty, r.gap_total_val);
+  });
+
+  const achPct = totTtd > 0 ? (totProd / totTtd * 100) : 0;
+  document.getElementById('kpi-plan-lbl').textContent = btsMode === 'WITH_BTS' ? 'Production Plan (With BTS)' : 'Production Plan (Without BTS)';
+  document.getElementById('kpi-prorata-badge').textContent = `Day ${D.meta.elapsed_working_days}/${D.meta.total_working_days} (${D.meta.prorata_pct}%)`;
+  document.getElementById('kpi-plan').textContent = fmt(totPlan);
+  document.getElementById('kpi-target-td').textContent = fmt(totTtd);
+  document.getElementById('kpi-prod').textContent = fmt(totProd);
+  const achB = document.getElementById('kpi-ach-badge');
+  achB.textContent = achPct.toFixed(1) + '% vs TTD';
+  achB.className = 'badge ' + (achPct >= 100 ? 'green' : (achPct >= 85 ? 'amber' : 'red'));
+  document.getElementById('kpi-prod-sub').textContent = `Yesterday: ${fmt(totYestProd)}`;
+  document.getElementById('kpi-rem-days').textContent = `${D.meta.remaining_working_days}d Left`;
+  document.getElementById('kpi-asking').textContent = fmt(totAsk);
+  document.getElementById('kpi-ask-sub').textContent = `Current Run Rate: ${fmt(totRun)} /d`;
+  document.getElementById('kpi-disp').textContent = fmt(totDisp);
+  document.getElementById('kpi-disp-sub').textContent = `Yest: ${fmt(totYestDisp)} | 601: ${fmt(totDisp601)}`;
+  document.getElementById('kpi-stock').textContent = fmt(totStock);
+  document.getElementById('kpi-stock-sub').textContent = `Unrest: ${fmt(totUnrest)} | Qual: ${fmt(totQual)}`;
+  document.getElementById('kpi-rmpm-sched').textContent = fmt(totRmSched);
+  document.getElementById('kpi-rmpm-sub').textContent = `Yest GRN: ${fmt(totRmYestGrn)} | Gap: ${fmt(totRmGap)}`;
+}
+
+function renderYesterdayTab(f) {
+  if (!f) f = getFilteredData();
+  const { fDemand, fRmpmParts, fMb51 } = f;
+  const q = (document.getElementById('inp-yest').value || '').toLowerCase().trim();
+  const latestIso = D.meta.latest_date_iso;
+  const nQ = v => Number(v||0).toLocaleString('en-IN', {maximumFractionDigits:0});
+
+  let yestDisp601Q = 0, yestDisp641Q = 0, yestDispPriceVal = 0;
+  let mtdDisp601Q = 0, mtdDisp641Q = 0, mtdDispPriceVal = 0;
+  fMb51.forEach(r => {
+    if (r.mvt === 601 || r.mvt === 602 || r.mvt === 641) {
+      if (r.date <= latestIso) {
+        if (r.mvt === 601 || r.mvt === 602) mtdDisp601Q += r.qty;
+        if (r.mvt === 641) mtdDisp641Q += r.qty;
+        mtdDispPriceVal += (r.price_val || 0);
+      }
+      if (r.date === latestIso) {
+        if (r.mvt === 601 || r.mvt === 602) yestDisp601Q += r.qty;
+        if (r.mvt === 641) yestDisp641Q += r.qty;
+        yestDispPriceVal += (r.price_val || 0);
+      }
+    }
+  });
+  const yestDispTotQ = yestDisp601Q + yestDisp641Q;
+  const mtdDispTotQ = mtdDisp601Q + mtdDisp641Q;
+  const yestDispMn = yestDispPriceVal / 1000000.0;
+  const mtdDispMn = mtdDispPriceVal / 1000000.0;
+
+  document.getElementById('yest-sec-dispatch').innerHTML = `
+    <div class="yest-stat-box"><div class="ys-lbl">Yesterday Qty</div><div class="ys-val blue">${nQ(yestDispTotQ)} <span style="font-size:10px">Nos</span></div><div class="ys-sub">601: ${nQ(yestDisp601Q)} | 641: ${nQ(yestDisp641Q)}</div></div>
+    <div class="yest-stat-box"><div class="ys-lbl">Yesterday Value</div><div class="ys-val cyan">₹${yestDispMn.toFixed(2)} M</div><div class="ys-sub">MTD: ₹${mtdDispMn.toFixed(2)} M</div></div>
+    <div class="yest-stat-box"><div class="ys-lbl">Month-to-Yest Qty</div><div class="ys-val" style="color:var(--text-main)">${nQ(mtdDispTotQ)} <span style="font-size:10px">Nos</span></div><div class="ys-sub">601: ${nQ(mtdDisp601Q)} | 641: ${nQ(mtdDisp641Q)}</div></div>
+  `;
+
+  let yestProdQ = 0, mtdProdQ = 0, yestProdGrossQ = 0, yestProdRevQ = 0;
+  fMb51.forEach(r => {
+    if ((r.mvt === 101 || r.mvt === 102) && r.type !== 'RMPM') {
+      if (r.date <= latestIso) mtdProdQ += r.qty;
+      if (r.date === latestIso) {
+        yestProdQ += r.qty;
+        if (r.mvt === 101) yestProdGrossQ += r.qty;
+        if (r.mvt === 102) yestProdRevQ += Math.abs(r.qty);
+      }
+    }
+  });
+  const yestPlanProdQ = fDemand.filter(r => r.type !== 'RMPM').reduce((s, r) => s + calcPartMetrics(r).yestPlanQ, 0);
+  const yestProdAch = yestPlanProdQ > 0 ? (yestProdQ / yestPlanProdQ * 100).toFixed(1) + '%' : 'N/A';
+  const yestProdGapQ = Math.max(0, yestPlanProdQ - yestProdQ);
+
+  document.getElementById('yest-sec-prod').innerHTML = `
+    <div class="yest-stat-box"><div class="ys-lbl">Yest Net vs Plan</div><div class="ys-val green">${nQ(yestProdQ)} <span style="font-size:9.5px;color:var(--text-muted)">/ ${nQ(yestPlanProdQ)}</span></div><div class="ys-sub">Ach: ${yestProdAch} | 102 Rev: ${nQ(yestProdRevQ)}</div></div>
+    <div class="yest-stat-box"><div class="ys-lbl">Yest Shortfall</div><div class="ys-val ${yestProdGapQ > 0 ? 'amber' : 'green'}">${yestProdGapQ > 0 ? '-' + nQ(yestProdGapQ) : '0'} <span style="font-size:10px">Nos</span></div><div class="ys-sub">101 Gross: ${nQ(yestProdGrossQ)}</div></div>
+    <div class="yest-stat-box"><div class="ys-lbl">MTD Net Prod</div><div class="ys-val" style="color:var(--text-main)">${nQ(mtdProdQ)} <span style="font-size:10px">Nos</span></div><div class="ys-sub">Run Rate: ${nQ(mtdProdQ / Math.max(1, D.meta.elapsed_working_days))}/d</div></div>
+  `;
+
+  const rmpmRows = [...fRmpmParts].sort((a,b) => b.yest_gap_val - a.yest_gap_val || b.yest_grn_qty - a.yest_grn_qty);
+  const totYestRm = rmpmRows.reduce((s,r) => s + r.yest_grn_qty, 0);
+  const totMtdRm = rmpmRows.reduce((s,r) => s + r.grn_qty, 0);
+  document.getElementById('yest-rmpm-badge').textContent = `Yest: ${nQ(totYestRm)} | MTD: ${nQ(totMtdRm)}`;
+
+  const tbRmLeft = document.getElementById('tb-yest-rmpm-left');
+  tbRmLeft.innerHTML = rmpmRows.map(r => {
+    const isDef = r.yest_gap_qty > 0;
+    return `<tr data-deficit="${isDef}">
+      <td class="part-code">${r.part}</td>
+      <td class="desc-cell" title="${esc(r.desc)}">${r.desc || '—'}</td>
+      <td>${r.minifactory || '—'}${r.line ? ' / '+r.line : ''}</td>
+      <td class="num" style="font-weight:700;color:${r.yest_grn_qty > 0 ? 'var(--green)' : 'var(--text-muted)'}">${nQ(r.yest_grn_qty)}</td>
+      <td class="num" style="font-weight:700;">${nQ(r.grn_qty)}</td>
+    </tr>`;
+  }).join('');
+
+  const snapDiv = document.getElementById('yest-snapshot-view');
+  const tblWrap = document.getElementById('yest-table-wrap');
+
+  if (yesterdaySubView === 'SNAPSHOT') {
+    snapDiv.style.display = 'flex';
+    tblWrap.style.display = 'none';
+    renderYesterdaySnapshot(snapDiv, fDemand, fRmpmParts, fMb51, q);
+    return;
+  }
+
+  snapDiv.style.display = 'none';
+  tblWrap.style.display = 'block';
+
+  const cg = document.getElementById('cg-yesterday');
+  const th = document.getElementById('th-yesterday');
+  const tb = document.getElementById('tb-yesterday');
+
+  if (yesterdaySubView === 'PROD' || yesterdaySubView === 'FG' || yesterdaySubView === 'MISSES') {
+    cg.innerHTML = `<col style="width:8%"><col style="width:16%"><col style="width:10%"><col style="width:9%"><col style="width:8.5%"><col style="width:9.5%"><col style="width:7%"><col style="width:8.5%"><col style="width:8%"><col style="width:8%"><col style="width:7.5%">`;
+    th.innerHTML = `<tr><th>Part Number</th><th>Material Description</th><th>Customer</th><th>MF / Line</th><th class="num">Daily Plan Target</th><th class="num" style="color:var(--green)">Yesterday Produced (101/102)</th><th class="num">% Achieved</th><th class="num">Shortfall/Surplus</th><th class="num">Prod Value (₹)</th><th class="num">Stock (MB52)</th><th>Status</th></tr>`;
+    const rows = fDemand.filter(r => {
+      if (q && !(r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q))) return false;
+      if (yesterdaySubView === 'MISSES') {
+        const m = calcPartMetrics(r);
+        return m.yestPlanQ > 0 && m.pctYestProd < 95;
+      }
+      return true;
+    });
+    tb.innerHTML = rows.map(r => {
+      const m = calcPartMetrics(r);
+      const yPlan = pick(m.yestPlanQ, m.yestPlanV);
+      const yProd = pick(r.yest_prod_qty, r.yest_prod_val);
+      const yStk = pick(r.stock_total_qty, r.stock_total_val);
+      const diff = (r.yest_prod_qty || 0) - (m.yestPlanQ || 0);
+      const ach = m.yestPlanQ > 0 ? (r.yest_prod_qty / m.yestPlanQ * 100.0) : 100.0;
+      const isLag = ach < 95 && m.yestPlanQ > 0;
+      const stCol = ach >= 95 ? 'var(--green)' : (ach >= 80 ? 'var(--amber)' : 'var(--red)');
+      const stTxt = ach >= 100 ? 'Met' : (ach >= 80 ? 'Near Plan' : 'Deficit');
+      return `<tr data-deficit="${isLag}" onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+        <td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.customer}</td>
+        <td>${r.minifactory}${r.line ? ' / '+r.line : ''}</td>
+        <td class="num">${fmt(yPlan)}</td><td class="num" style="color:var(--green);font-weight:700">${fmt(yProd)}</td>
+        <td class="num" style="color:${stCol};font-weight:700">${ach.toFixed(1)}%</td>
+        <td class="num" style="color:${diff >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${diff >= 0 ? '+'+nQ(diff) : nQ(diff)}</td>
+        <td class="num" style="color:var(--cyan)">₹${((r.yest_prod_val||0)/1e6).toFixed(2)}M</td>
+        <td class="num">${fmt(yStk)}</td><td style="color:${stCol};font-weight:700;">${stTxt}</td>
+      </tr>`;
+    }).join('');
+  } else if (yesterdaySubView === 'DISPATCH') {
+    cg.innerHTML = `<col style="width:8%"><col style="width:16%"><col style="width:11%"><col style="width:9%"><col style="width:8.5%"><col style="width:8.5%"><col style="width:10%"><col style="width:9.5%"><col style="width:8.5%"><col style="width:11%">`;
+    th.innerHTML = `<tr><th>Part Number</th><th>Material Description</th><th>Customer</th><th>MF / Line</th><th class="num">Customer (601)</th><th class="num">STO Inter-Plant (641)</th><th class="num" style="color:var(--blue)">Total Yesterday Dispatched</th><th class="num">Invoiced Value</th><th class="num">Stock (MB52)</th><th>Unit Price</th></tr>`;
+    const rows = fDemand.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q));
+    tb.innerHTML = rows.map(r => {
+      const d601 = pick(r.yest_disp_601_qty, r.yest_disp_601_val);
+      const d641 = pick(r.yest_disp_641_qty, r.yest_disp_641_val);
+      const dTot = pick(r.yest_disp_qty, r.yest_disp_val);
+      const dVal = (r.yest_disp_val || 0) / 1e6;
+      const yStk = pick(r.stock_total_qty, r.stock_total_val);
+      return `<tr onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+        <td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.customer}</td>
+        <td>${r.minifactory}${r.line ? ' / '+r.line : ''}</td>
+        <td class="num">${fmt(d601)}</td><td class="num" style="color:var(--cyan)">${fmt(d641)}</td>
+        <td class="num" style="color:var(--blue);font-weight:700">${fmt(dTot)}</td>
+        <td class="num" style="color:var(--cyan);font-weight:700">₹${dVal.toFixed(2)}M</td>
+        <td class="num">${fmt(yStk)}</td><td>₹${(r.price||0).toFixed(0)}</td>
+      </tr>`;
+    }).join('');
+  } else if (yesterdaySubView === 'RMPM') {
+    cg.innerHTML = `<col style="width:9%"><col style="width:17%"><col style="width:13%"><col style="width:10%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:7.5%"><col style="width:8.5%"><col style="width:8%">`;
+    th.innerHTML = `<tr><th>Part Number</th><th>Raw Material Description</th><th>Vendor / Supplier</th><th>MF / Line</th><th class="num">Yesterday Vendor Plan</th><th class="num">Yesterday Actual GRN</th><th class="num">Yesterday Shortfall</th><th class="num">Adherence %</th><th class="num">MB52 Stock</th><th>Vendor Status</th></tr>`;
+    const rows = fRmpmParts.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || (r.supplier||'').toLowerCase().includes(q));
+    tb.innerHTML = rows.map(r => {
+      const yPlan = pick(r.sched_yest_qty, r.sched_yest_val);
+      const yAct = pick(r.yest_grn_qty, r.yest_grn_val);
+      const yGap = pick(r.yest_gap_qty, r.yest_gap_val);
+      const adhPct = yPlan > 0 ? (yAct / yPlan * 100.0) : (yAct > 0 ? 100.0 : 0.0);
+      const isLag = yGap > 0;
+      const stCol = !isLag ? 'var(--green)' : 'var(--amber)';
+      return `<tr data-deficit="${isLag}">
+        <td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.supplier}</td>
+        <td>${r.minifactory || '—'}${r.line ? ' / '+r.line : ''}</td>
+        <td class="num">${fmt(yPlan)}</td><td class="num" style="color:var(--green);font-weight:700">${fmt(yAct)}</td>
+        <td class="num" style="color:${yGap > 0 ? 'var(--amber)' : 'var(--text-muted)'};font-weight:700">${fmt(yGap)}</td>
+        <td class="num" style="color:${stCol};font-weight:700">${adhPct.toFixed(1)}%</td>
+        <td class="num" style="font-weight:700">${fmt(pick(r.total_stock_qty, r.total_stock_val))}</td>
+        <td style="color:${stCol};font-weight:700;">${!isLag ? 'On-Time' : (yAct > 0 ? 'Partial' : 'Non-Arrival')}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    cg.innerHTML = `<col style="width:9%"><col style="width:8%"><col style="width:15%"><col style="width:11%"><col style="width:9%"><col style="width:8.5%"><col style="width:8.5%"><col style="width:8%"><col style="width:6.5%"><col style="width:8%"><col style="width:8.5%">`;
+    th.innerHTML = `<tr><th>Pillar</th><th>Part Number</th><th>Material Description</th><th>Customer / Supplier</th><th>MF / Line</th><th class="num">Yesterday Plan</th><th class="num">Yesterday Actual</th><th class="num">Gap / Variance</th><th class="num">Ach %</th><th class="num">Stock (MB52)</th><th>Status</th></tr>`;
+    const allRows = [];
+    fDemand.forEach(r => {
+      if (q && !(r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q))) return;
+      const m = calcPartMetrics(r);
+      const yPlan = pick(m.yestPlanQ, m.yestPlanV);
+      const yProd = pick(r.yest_prod_qty, r.yest_prod_val);
+      const prodGap = Math.max(0, yPlan - yProd);
+      const isLag = m.pctYestProd < 85 && yPlan > 0;
+      allRows.push(`<tr data-deficit="${isLag}" onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+        <td><span class="badge green">1. PROD</span></td><td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.customer}</td><td>${r.line || r.minifactory}</td>
+        <td class="num">${fmt(yPlan)}</td><td class="num" style="color:var(--green);font-weight:700">${fmt(yProd)}</td>
+        <td class="num" style="color:${prodGap>0?'var(--amber)':'var(--text-muted)'}">${fmt(prodGap)}</td>
+        <td class="num" style="font-weight:700">${m.pctYestProd.toFixed(1)}%</td>
+        <td class="num">${fmt(pick(r.stock_total_qty, r.stock_total_val))}</td>
+        <td>${m.pctYestProd >= 100 ? 'Target Met' : 'Below Plan'}</td>
+      </tr>`);
+    });
+    fDemand.forEach(r => {
+      if (q && !(r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q))) return;
+      const yDisp = pick(r.yest_disp_qty, r.yest_disp_val);
+      allRows.push(`<tr onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+        <td><span class="badge blue">2. DISP</span></td><td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.customer}</td><td>${r.line || r.minifactory}</td>
+        <td class="num">—</td><td class="num" style="color:var(--blue);font-weight:700">${fmt(yDisp)}</td>
+        <td class="num">—</td><td class="num">—</td>
+        <td class="num">${fmt(pick(r.stock_total_qty, r.stock_total_val))}</td>
+        <td>601: ${fmt(pick(r.yest_disp_601_qty, r.yest_disp_601_val))} | 641: ${fmt(pick(r.yest_disp_641_qty, r.yest_disp_641_val))}</td>
+      </tr>`);
+    });
+    fRmpmParts.forEach(r => {
+      if (q && !(r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || (r.supplier||'').toLowerCase().includes(q))) return;
+      const yPlan = pick(r.sched_yest_qty, r.sched_yest_val);
+      const yAct = pick(r.yest_grn_qty, r.yest_grn_val);
+      const yGap = pick(r.yest_gap_qty, r.yest_gap_val);
+      const adhPct = yPlan > 0 ? (yAct / yPlan * 100.0) : (yAct > 0 ? 100.0 : 0.0);
+      allRows.push(`<tr data-deficit="${yGap > 0}">
+        <td><span class="badge amber">3. RMPM</span></td><td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.supplier}</td><td>${r.line || r.minifactory}</td>
+        <td class="num">${fmt(yPlan)}</td><td class="num" style="color:var(--green);font-weight:700">${fmt(yAct)}</td>
+        <td class="num" style="color:${yGap>0?'var(--amber)':'var(--text-muted)'}">${fmt(yGap)}</td>
+        <td class="num" style="font-weight:700">${adhPct.toFixed(1)}%</td>
+        <td class="num">${fmt(pick(r.total_stock_qty, r.total_stock_val))}</td>
+        <td>${yGap > 0 ? 'Vendor Shortfall' : 'On Track'}</td>
+      </tr>`);
+    });
+    tb.innerHTML = allRows.join('');
+  }
+}
+
+function renderYesterdaySnapshot(container, fDemand, fRmpmParts, fMb51, q) {
+  const mfMap = {};
+  const custMap = {};
+  fDemand.forEach(r => {
+    const mf = r.minifactory || 'Other';
+    if (!mfMap[mf]) mfMap[mf] = { mf, plan: 0, prod: 0, disp: 0, met: 0, tot: 0, zero: 0 };
+    const m = calcPartMetrics(r);
+    mfMap[mf].plan += pick(m.yestPlanQ, m.yestPlanV);
+    mfMap[mf].prod += pick(r.yest_prod_qty, r.yest_prod_val);
+    mfMap[mf].disp += pick(r.yest_disp_qty, r.yest_disp_val);
+    if (m.yestPlanQ > 0) {
+      mfMap[mf].tot += 1;
+      if (m.pctYestProd >= 95) mfMap[mf].met += 1;
+      if (r.yest_prod_qty <= 0) mfMap[mf].zero += 1;
+    }
+
+    const cust = r.customer || 'Other';
+    if (!custMap[cust]) custMap[cust] = { cust, prod: 0, d601: 0, d641: 0, valMn: 0 };
+    custMap[cust].prod += pick(r.yest_prod_qty, r.yest_prod_val);
+    custMap[cust].d601 += pick(r.yest_disp_601_qty, r.yest_disp_601_val);
+    custMap[cust].d641 += pick(r.yest_disp_641_qty, r.yest_disp_641_val);
+    custMap[cust].valMn += (r.yest_disp_val || 0) / 1e6;
+  });
+  const mfRows = Object.values(mfMap).sort((a,b) => b.plan - a.plan);
+  const custRows = Object.values(custMap).sort((a,b) => (b.d601 + b.d641) - (a.d601 + a.d641));
+
+  const misses = fDemand
+    .map(r => ({ r, m: calcPartMetrics(r) }))
+    .filter(x => x.m.yestPlanQ > 0 && x.m.pctYestProd < 95 && (!q || x.r.part.toLowerCase().includes(q) || x.r.desc.toLowerCase().includes(q) || x.r.customer.toLowerCase().includes(q)))
+    .sort((a,b) => (b.m.yestPlanV - b.r.yest_prod_val) - (a.m.yestPlanV - a.r.yest_prod_val));
+
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:8px;flex-shrink:0;">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px;">
+        <div style="font-size:10.5px;font-weight:800;color:var(--blue);text-transform:uppercase;margin-bottom:6px;">🏭 Minifactory Yesterday Pulse (Plan vs Net Prod vs Dispatch)</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:6px;">
+          ${mfRows.map(x => {
+            const ach = x.plan > 0 ? (x.prod / x.plan * 100) : 100;
+            const col = ach >= 95 ? 'var(--green)' : (ach >= 80 ? 'var(--amber)' : 'var(--red)');
+            return `<div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:5px;padding:6px 8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <strong style="font-size:11px;">${esc(x.mf)}</strong>
+                <span class="badge" style="color:${col};border-color:${col}">${ach.toFixed(1)}%</span>
+              </div>
+              <div style="height:4px;background:rgba(148,163,184,0.2);border-radius:2px;margin:5px 0;overflow:hidden;">
+                <div style="height:100%;width:${Math.min(100,Math.max(0,ach))}%;background:${col};"></div>
+              </div>
+              <div style="font-size:9.5px;color:var(--text-muted);">Plan: <b style="color:var(--text-main)">${fmt(x.plan)}</b> | Prod: <b style="color:var(--green)">${fmt(x.prod)}</b></div>
+              <div style="font-size:9.5px;color:var(--text-muted);margin-top:2px;">Disp: <b style="color:var(--blue)">${fmt(x.disp)}</b> | Met: <b>${x.met}/${x.tot}</b> ${x.zero>0?`<span style="color:var(--red)">(${x.zero} Zero)</span>`:''}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;flex-direction:column;">
+        <div style="font-size:10.5px;font-weight:800;color:var(--cyan);text-transform:uppercase;margin-bottom:6px;">🚚 Customer Yesterday Dispatch &amp; Prod</div>
+        <div style="overflow-y:auto;max-height:110px;">
+          <table class="wrapped-report">
+            <thead><tr><th>Customer</th><th class="num">Yest Prod</th><th class="num">601 Cust</th><th class="num">641 STO</th><th class="num">Val (₹M)</th></tr></thead>
+            <tbody>
+              ${custRows.map(c => `<tr>
+                <td style="font-weight:700">${esc(c.cust)}</td>
+                <td class="num" style="color:var(--green);font-weight:700">${fmt(c.prod)}</td>
+                <td class="num" style="color:var(--blue);font-weight:700">${fmt(c.d601)}</td>
+                <td class="num" style="color:var(--cyan)">${fmt(c.d641)}</td>
+                <td class="num" style="font-weight:700">₹${c.valMn.toFixed(2)}M</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:800;color:var(--amber);margin-top:2px;">⚠️ Yesterday Production Misses &amp; Zero-Production Exceptions (${misses.length} Parts — Click any row to Drilldown &amp; Log Action)</div>
+    <div class="tbl-wrap" style="flex:1;">
+      <table class="wrapped-report">
+        <thead><tr><th>Part #</th><th>FG Description</th><th>Customer</th><th>MF / Line</th><th class="num">Yest Plan</th><th class="num">Yest Prod</th><th class="num">Shortfall</th><th class="num">Ach %</th><th class="num">Yest Disp</th><th class="num">MB52 Stock</th><th>Exception Status</th></tr></thead>
+        <tbody>
+          ${misses.map(({r, m}) => {
+            const yp = pick(m.yestPlanQ, m.yestPlanV);
+            const ya = pick(r.yest_prod_qty, r.yest_prod_val);
+            const gap = Math.max(0, yp - ya);
+            const yd = pick(r.yest_disp_qty, r.yest_disp_val);
+            const isZero = r.yest_prod_qty <= 0;
+            return `<tr data-deficit="true" onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+              <td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.customer}</td><td>${r.minifactory} / ${r.line}</td>
+              <td class="num">${fmt(yp)}</td><td class="num" style="color:${isZero?'var(--red)':'var(--amber)'};font-weight:700">${fmt(ya)}</td>
+              <td class="num" style="color:var(--red);font-weight:800">-${fmt(gap)}</td>
+              <td class="num" style="font-weight:700">${m.pctYestProd.toFixed(1)}%</td>
+              <td class="num" style="color:var(--blue)">${fmt(yd)}</td>
+              <td class="num">${fmt(pick(r.stock_total_qty, r.stock_total_val))}</td>
+              <td style="color:${isZero?'var(--red)':'var(--amber)'};font-weight:700">${isZero ? '🚨 Zero Prod' : '⚠️ Below Plan'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+
+function showTooltip(evt, html) {
+  const tt = document.getElementById('chart-tooltip');
+  if (!tt) return;
+  tt.innerHTML = html;
+  tt.style.display = 'block';
+  const x = Math.min(window.innerWidth - 260, evt.clientX + 14);
+  const y = Math.max(10, evt.clientY - 28);
+  tt.style.left = x + 'px';
+  tt.style.top = y + 'px';
+}
+function hideTooltip() {
+  const tt = document.getElementById('chart-tooltip');
+  if (tt) tt.style.display = 'none';
+}
+
+function renderSvgCombo(containerId, labels, seriesList, onClickLabel) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  if (!labels || labels.length === 0) {
+    wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:11px;">No data for current filter</div>';
+    return;
+  }
+  const W = 560, H = 195, padL = 44, padR = 16, padT = 22, padB = 38;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  let maxVal = 0;
+  seriesList.forEach(s => (s.data || []).forEach(v => { if (v > maxVal) maxVal = v; }));
+  if (maxVal <= 0) maxVal = 10;
+  maxVal *= 1.12;
+
+  const n = labels.length;
+  const stepX = plotW / Math.max(1, n);
+  const barSeries = seriesList.filter(s => s.type !== 'line');
+  const lineSeries = seriesList.filter(s => s.type === 'line');
+  const bCount = Math.max(1, barSeries.length);
+  const groupW = Math.min(42, stepX * 0.72);
+  const barW = Math.max(4, groupW / bCount - 2);
+
+  let gridSvg = '';
+  for (let i = 0; i <= 4; i++) {
+    const val = (maxVal / 4) * i;
+    const y = padT + plotH - (i / 4) * plotH;
+    gridSvg += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="rgba(148,163,184,0.14)" stroke-dasharray="2,2"/>`;
+    gridSvg += `<text x="${padL - 5}" y="${y + 3}" text-anchor="end" fill="var(--text-muted)" font-size="8.5">${fmtCompact(val)}</text>`;
+  }
+
+  let barsSvg = '';
+  labels.forEach((lbl, idx) => {
+    const cx = padL + idx * stepX + stepX / 2;
+    const startX = cx - (bCount * (barW + 2)) / 2;
+    barSeries.forEach((s, bIdx) => {
+      const val = Number(s.data[idx]) || 0;
+      const h = Math.max(1, (val / maxVal) * plotH);
+      const x = startX + bIdx * (barW + 2);
+      const y = padT + plotH - h;
+      const ttHtml = `<b>${esc(lbl)}</b><br/>${esc(s.name)}: <b>${fmt(val)}</b>`;
+      barsSvg += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="2" fill="${s.color}" style="cursor:pointer" onmousemove="showTooltip(event, '${esc(ttHtml)}')" onmouseleave="hideTooltip()" ${onClickLabel ? `onclick="${onClickLabel}('${esc(lbl)}')"` : ''}/>`;
+    });
+    const shortLbl = String(lbl).length > 10 ? String(lbl).slice(0, 9) + '…' : lbl;
+    barsSvg += `<text x="${cx}" y="${H - padB + 13}" text-anchor="middle" fill="var(--text-sub)" font-size="8.5" transform="rotate(-14 ${cx} ${H - padB + 13})">${esc(shortLbl)}</text>`;
+  });
+
+  let linesSvg = '';
+  lineSeries.forEach(s => {
+    const pts = labels.map((lbl, idx) => {
+      const cx = padL + idx * stepX + stepX / 2;
+      const val = Number(s.data[idx]) || 0;
+      const y = padT + plotH - (val / maxVal) * plotH;
+      return `${cx},${y}`;
+    });
+    if (pts.length > 1) {
+      linesSvg += `<polyline fill="none" stroke="${s.color}" stroke-width="2" points="${pts.join(' ')}"/>`;
+    }
+    labels.forEach((lbl, idx) => {
+      const cx = padL + idx * stepX + stepX / 2;
+      const val = Number(s.data[idx]) || 0;
+      const y = padT + plotH - (val / maxVal) * plotH;
+      const ttHtml = `<b>${esc(lbl)}</b><br/>${esc(s.name)}: <b>${fmt(val)}</b>`;
+      linesSvg += `<circle cx="${cx}" cy="${y}" r="3" fill="${s.color}" onmousemove="showTooltip(event, '${esc(ttHtml)}')" onmouseleave="hideTooltip()"/>`;
+    });
+  });
+
+  const legendSvg = seriesList.map((s, i) => {
+    const lx = padL + i * 115;
+    return `<g transform="translate(${lx}, 6)"><rect x="0" y="0" width="8" height="8" rx="2" fill="${s.color}"/><text x="12" y="7.5" fill="var(--text-sub)" font-size="9" font-weight="700">${esc(s.name)}</text></g>`;
+  }).join('');
+
+  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${legendSvg}${gridSvg}${barsSvg}${linesSvg}</svg>`;
+}
+
+function renderDemandTab(f) {
+  if (!f) f = getFilteredData();
+  const topParts = [...f.fDemand].sort((a,b) => calcPartMetrics(b).planV - calcPartMetrics(a).planV).slice(0, 12);
+  renderSvgCombo(
+    'ch-dem-part',
+    topParts.map(r => r.part),
+    [
+      { name: 'Monthly Plan', type: 'bar', color: '#3b82f6', data: topParts.map(r => pick(calcPartMetrics(r).planQ, calcPartMetrics(r).planV)) },
+      { name: 'Target TTD', type: 'bar', color: '#f59e0b', data: topParts.map(r => pick(calcPartMetrics(r).ttdQ, calcPartMetrics(r).ttdV)) },
+      { name: 'Prod TTD', type: 'bar', color: '#10b981', data: topParts.map(r => pick(calcPartMetrics(r).prodQ, calcPartMetrics(r).prodV)) }
+    ],
+    'openFgDrill'
+  );
+
+  const lineMap = {};
+  f.fDemand.forEach(r => {
+    const ln = r.line || r.minifactory || 'Other';
+    if (!lineMap[ln]) lineMap[ln] = { ln, run: 0, ask: 0 };
+    const m = calcPartMetrics(r);
+    lineMap[ln].run += pick(m.runRateQ, m.runRateV);
+    lineMap[ln].ask += pick(m.askRateQ, m.askRateV);
+  });
+  const lnArr = Object.values(lineMap).sort((a,b) => b.ask - a.ask).slice(0, 12);
+  renderSvgCombo(
+    'ch-dem-line',
+    lnArr.map(x => x.ln),
+    [
+      { name: 'Current Run Rate /d', type: 'bar', color: '#10b981', data: lnArr.map(x => x.run) },
+      { name: 'Required Asking Rate /d', type: 'line', color: '#ef4444', data: lnArr.map(x => x.ask) }
+    ]
+  );
+
+  renderDemandTable(f);
+}
+
+function renderDemandTable(f) {
+  if (!f) f = getFilteredData();
+  const q = (document.getElementById('inp-demand').value || '').toLowerCase().trim();
+  const thPlan = document.getElementById('th-dem-plan');
+  if (thPlan) thPlan.textContent = btsMode === 'WITH_BTS' ? 'Monthly Plan (With BTS)' : 'Monthly Plan (Without BTS)';
+  const rows = f.fDemand.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q));
+  document.getElementById('tb-demand').innerHTML = rows.map(r => {
+    const m = calcPartMetrics(r);
+    const isDef = m.pctAchTd < 85 && m.planQ > 0;
+    const achCol = m.pctAchTd >= 100 ? 'var(--green)' : (m.pctAchTd >= 85 ? 'var(--amber)' : 'var(--red)');
+    return `<tr data-deficit="${isDef}" onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+      <td class="part-code">${r.part}</td><td class="desc-cell" title="${esc(r.desc)}">${r.desc}</td><td>${r.customer}</td><td>${r.minifactory}${r.line ? ' / '+r.line : ''}</td>
+      <td class="num">${fmt(pick(m.planQ, m.planV))}</td><td class="num">${fmt(pick(m.ttdQ, m.ttdV))}</td>
+      <td class="num" style="color:var(--green);font-weight:700">${fmt(pick(m.prodQ, m.prodV))}</td>
+      <td class="num">${fmt(pick(r.stock_total_qty, r.stock_total_val))}</td>
+      <td class="num" style="color:${achCol};font-weight:700">${m.pctAchTd.toFixed(1)}%</td>
+      <td class="num" style="color:${m.pendQ>0?'var(--amber)':'var(--text-muted)'};font-weight:700">${fmt(pick(m.pendQ, m.pendV))}</td>
+      <td class="num">${fmt(pick(r.yest_prod_qty, r.yest_prod_val))}</td>
+      <td class="num">${fmt(pick(m.runRateQ, m.runRateV))}</td>
+      <td class="num" style="color:var(--amber);font-weight:700">${fmt(pick(m.askRateQ, m.askRateV))}</td>
+      <td class="num">${m.pctAchMon.toFixed(1)}%</td>
+      <td style="color:${achCol};font-weight:700">${esc(m.remStr)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDispatchTab(f) {
+  if (!f) f = getFilteredData();
+  const topParts = [...f.fDemand].sort((a,b) => calcDispatchMetrics(b).planV - calcDispatchMetrics(a).planV).slice(0, 12);
+  renderSvgCombo(
+    'ch-disp-part',
+    topParts.map(r => r.part),
+    [
+      { name: 'Monthly Plan', type: 'bar', color: '#64748b', data: topParts.map(r => pick(calcDispatchMetrics(r).planQ, calcDispatchMetrics(r).planV)) },
+      { name: 'Target TTD', type: 'bar', color: '#f59e0b', data: topParts.map(r => pick(calcDispatchMetrics(r).ttdQ, calcDispatchMetrics(r).ttdV)) },
+      { name: 'Dispatch TTD', type: 'bar', color: '#06b6d4', data: topParts.map(r => pick(calcDispatchMetrics(r).dispQ, calcDispatchMetrics(r).dispV)) }
+    ],
+    'openFgDrill'
+  );
+
+  const custMap = {};
+  f.fDemand.forEach(r => {
+    const c = r.customer || r.line || 'Other';
+    if (!custMap[c]) custMap[c] = { c, run: 0, ask: 0 };
+    const m = calcDispatchMetrics(r);
+    custMap[c].run += pick(m.runRateQ, m.runRateV);
+    custMap[c].ask += pick(m.askRateQ, m.askRateV);
+  });
+  const cArr = Object.values(custMap).sort((a,b) => b.ask - a.ask).slice(0, 12);
+  renderSvgCombo(
+    'ch-disp-cust',
+    cArr.map(x => x.c),
+    [
+      { name: 'Dispatch Run Rate /d', type: 'bar', color: '#06b6d4', data: cArr.map(x => x.run) },
+      { name: 'Dispatch Asking Rate /d', type: 'line', color: '#f59e0b', data: cArr.map(x => x.ask) }
+    ]
+  );
+
+  renderDispatchTable(f);
+}
+
+function renderDispatchTable(f) {
+  if (!f) f = getFilteredData();
+  const q = (document.getElementById('inp-dispatch') ? document.getElementById('inp-dispatch').value : '').toLowerCase().trim();
+  const thPlan = document.getElementById('th-disp-plan');
+  if (thPlan) thPlan.textContent = btsMode === 'WITH_BTS' ? 'Monthly Plan (With BTS)' : 'Monthly Plan (No BTS)';
+  const rows = f.fDemand.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q));
+  const tb = document.getElementById('tb-dispatch');
+  if (!tb) return;
+  tb.innerHTML = rows.map(r => {
+    const m = calcDispatchMetrics(r);
+    const isDef = m.pctAchTd < 85 && m.planQ > 0;
+    const achCol = m.pctAchTd >= 100 ? 'var(--green)' : (m.pctAchTd >= 85 ? 'var(--amber)' : 'var(--red)');
+    return `<tr data-deficit="${isDef}" onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+      <td class="part-code">${r.part}</td><td class="desc-cell" title="${esc(r.desc)}">${r.desc}</td><td>${r.customer}</td><td>${r.minifactory}${r.line ? ' / '+r.line : ''}</td>
+      <td class="num">${fmt(pick(m.planQ, m.planV))}</td><td class="num">${fmt(pick(m.ttdQ, m.ttdV))}</td>
+      <td class="num" style="color:var(--cyan);font-weight:700">${fmt(pick(m.dispQ, m.dispV))}</td>
+      <td class="num" style="color:var(--blue)">${fmt(pick(r.disp_601_qty, r.disp_601_val))}</td>
+      <td class="num" style="color:var(--purple)">${fmt(pick(r.disp_641_qty, r.disp_641_val))}</td>
+      <td class="num">${fmt(pick(r.stock_total_qty, r.stock_total_val))}</td>
+      <td class="num" style="color:${achCol};font-weight:700">${m.pctAchTd.toFixed(1)}%</td>
+      <td class="num" style="color:${m.pendDispQ>0?'var(--amber)':'var(--text-muted)'};font-weight:700">${fmt(pick(m.pendDispQ, m.pendDispV))}</td>
+      <td class="num" style="color:var(--blue);font-weight:700">${fmt(pick(r.yest_disp_qty, r.yest_disp_val))}</td>
+      <td class="num">${fmt(pick(m.runRateQ, m.runRateV))}</td>
+      <td class="num" style="color:var(--amber);font-weight:700">${fmt(pick(m.askRateQ, m.askRateV))}</td>
+      <td class="num">${m.pctAchMon.toFixed(1)}%</td>
+      <td style="color:${achCol};font-weight:700">${esc(m.remStr)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRmpmTab(f) {
+  if (!f) f = getFilteredData();
+  const dateMap = {};
+  f.fVendorSched.forEach(v => {
+    if (!dateMap[v.date]) dateMap[v.date] = { date: v.date, sched: 0, grn: 0 };
+    dateMap[v.date].sched += pick(v.sched_qty, v.sched_val);
+    dateMap[v.date].grn += pick(v.grn_qty, v.grn_val);
+  });
+  const dArr = Object.values(dateMap).sort((a,b) => a.date.localeCompare(b.date));
+  renderSvgCombo(
+    'ch-rmpm-date',
+    dArr.map(x => x.date.slice(5)),
+    [
+      { name: 'Supplier Schedule', type: 'bar', color: '#f59e0b', data: dArr.map(x => x.sched) },
+      { name: 'MB51 Receipt (101/102)', type: 'bar', color: '#10b981', data: dArr.map(x => x.grn) }
+    ]
+  );
+
+  const pArr = [...f.fRmpmParts].sort((a,b) => b.sched_total_val - a.sched_total_val).slice(0, 12);
+  renderSvgCombo(
+    'ch-rmpm-part',
+    pArr.map(r => r.part),
+    [
+      { name: 'Total Schedule', type: 'bar', color: '#f59e0b', data: pArr.map(r => pick(r.sched_total_qty, r.sched_total_val)) },
+      { name: 'Received GRN', type: 'bar', color: '#10b981', data: pArr.map(r => pick(r.grn_qty, r.grn_val)) },
+      { name: 'MB52 Stock', type: 'line', color: '#a855f7', data: pArr.map(r => pick(r.total_stock_qty, r.total_stock_val)) }
+    ]
+  );
+  renderRmpmTables(f);
+}
+
+function renderRmpmTables(f) {
+  if (!f) f = getFilteredData();
+  const q = (document.getElementById('inp-rmpm').value || '').toLowerCase().trim();
+  const mode = (document.getElementById('sel-rmpm-tbl') || {}).value || 'SUMMARY';
+  const th = document.getElementById('th-rmpm');
+  const tb = document.getElementById('tb-rmpm');
+  if (mode === 'SCHEDULE') {
+    th.innerHTML = `<tr><th>Date</th><th>Part Number</th><th>Description</th><th>MF / Line</th><th class="num">Scheduled Qty/Val</th><th class="num">Received GRN</th><th class="num">Gap</th></tr>`;
+    const rows = f.fVendorSched.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q));
+    tb.innerHTML = rows.map(r => {
+      const sc = pick(r.sched_qty, r.sched_val);
+      const gr = pick(r.grn_qty, r.grn_val);
+      const gp = Math.max(0, sc - gr);
+      return `<tr data-deficit="${gp > 0}">
+        <td>${r.date}</td><td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.minifactory} / ${r.line}</td>
+        <td class="num">${fmt(sc)}</td><td class="num" style="color:var(--green);font-weight:700">${fmt(gr)}</td>
+        <td class="num" style="color:${gp>0?'var(--amber)':'var(--text-muted)'};font-weight:700">${fmt(gp)}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    th.innerHTML = `<tr><th>Part Number</th><th>Description</th><th>Supplier</th><th>MF / Line</th><th class="num">Total Sched</th><th class="num">MTD GRN</th><th class="num">Total Gap</th><th class="num">Yest Plan</th><th class="num">Yest GRN</th><th class="num">MB52 Stock</th></tr>`;
+    tb.innerHTML = f.fRmpmParts.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || (r.supplier||'').toLowerCase().includes(q)).map(r => `<tr data-deficit="${r.gap_total_qty > 0}">
+      <td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.supplier}</td><td>${r.minifactory} / ${r.line}</td>
+      <td class="num">${fmt(pick(r.sched_total_qty, r.sched_total_val))}</td>
+      <td class="num" style="color:var(--green);font-weight:700">${fmt(pick(r.grn_qty, r.grn_val))}</td>
+      <td class="num" style="color:${r.gap_total_qty>0?'var(--amber)':'var(--text-muted)'};font-weight:700">${fmt(pick(r.gap_total_qty, r.gap_total_val))}</td>
+      <td class="num">${fmt(pick(r.sched_yest_qty, r.sched_yest_val))}</td>
+      <td class="num" style="color:var(--green);font-weight:700">${fmt(pick(r.yest_grn_qty, r.yest_grn_val))}</td>
+      <td class="num" style="font-weight:700">${fmt(pick(r.total_stock_qty, r.total_stock_val))}</td>
+    </tr>`).join('');
+  }
+}
+
+function renderOverviewTab(f) {
+  if (!f) f = getFilteredData();
+  const mfMap = {};
+  f.fDemand.forEach(r => {
+    const mf = r.minifactory || 'Other';
+    if (!mfMap[mf]) mfMap[mf] = { mf, plan: 0, ttd: 0, prod: 0 };
+    const m = calcPartMetrics(r);
+    mfMap[mf].plan += pick(m.planQ, m.planV);
+    mfMap[mf].ttd += pick(m.ttdQ, m.ttdV);
+    mfMap[mf].prod += pick(m.prodQ, m.prodV);
+  });
+  const mfArr = Object.values(mfMap).sort((a,b) => b.plan - a.plan);
+  renderSvgCombo('ch-ov-mf', mfArr.map(x => x.mf), [
+    { name: 'Monthly Plan', type: 'bar', color: '#3b82f6', data: mfArr.map(x => x.plan) },
+    { name: 'Target TTD', type: 'bar', color: '#f59e0b', data: mfArr.map(x => x.ttd) },
+    { name: 'Prod TTD', type: 'bar', color: '#10b981', data: mfArr.map(x => x.prod) }
+  ]);
+
+  const dMap = {};
+  f.fMb51.forEach(r => {
+    if (!dMap[r.date]) dMap[r.date] = { date: r.date, prod: 0, disp: 0 };
+    if ((r.mvt === 101 || r.mvt === 102) && r.type !== 'RMPM') dMap[r.date].prod += pick(r.qty, r.price_val || r.val);
+    if (r.mvt === 601 || r.mvt === 602 || r.mvt === 641) dMap[r.date].disp += pick(r.qty, r.price_val || r.val);
+  });
+  const dArr = Object.values(dMap).sort((a,b) => a.date.localeCompare(b.date));
+  renderSvgCombo('ch-ov-daily', dArr.map(x => x.date.slice(5)), [
+    { name: 'Daily Prod (101/102)', type: 'bar', color: '#10b981', data: dArr.map(x => x.prod) },
+    { name: 'Daily Dispatch (601+641)', type: 'line', color: '#06b6d4', data: dArr.map(x => x.disp) }
+  ]);
+
+  const cMap = {};
+  f.fDemand.forEach(r => {
+    const c = r.customer || 'Other';
+    if (!cMap[c]) cMap[c] = { c, plan: 0, ttd: 0, prod: 0 };
+    const m = calcPartMetrics(r);
+    cMap[c].plan += pick(m.planQ, m.planV);
+    cMap[c].ttd += pick(m.ttdQ, m.ttdV);
+    cMap[c].prod += pick(m.prodQ, m.prodV);
+  });
+  const cArr = Object.values(cMap).sort((a,b) => b.plan - a.plan);
+  renderSvgCombo('ch-ov-cust', cArr.map(x => x.c), [
+    { name: 'Monthly Plan', type: 'bar', color: '#3b82f6', data: cArr.map(x => x.plan) },
+    { name: 'Target TTD', type: 'bar', color: '#f59e0b', data: cArr.map(x => x.ttd) },
+    { name: 'Prod TTD', type: 'bar', color: '#10b981', data: cArr.map(x => x.prod) }
+  ]);
+
+  const rmArr = [...f.fRmpmParts].sort((a,b) => b.sched_total_val - a.sched_total_val).slice(0, 10);
+  renderSvgCombo('ch-ov-rmpm', rmArr.map(r => r.part), [
+    { name: 'Schedule', type: 'bar', color: '#f59e0b', data: rmArr.map(r => pick(r.sched_total_qty, r.sched_total_val)) },
+    { name: 'Receipt', type: 'bar', color: '#10b981', data: rmArr.map(r => pick(r.grn_qty, r.grn_val)) },
+    { name: 'Stock', type: 'line', color: '#a855f7', data: rmArr.map(r => pick(r.total_stock_qty, r.total_stock_val)) }
+  ]);
+}
+
+function renderStockTab(f) {
+  if (!f) f = getFilteredData();
+  const mfStk = {};
+  f.fMb52.forEach(r => {
+    const mf = r.minifactory || 'Other';
+    if (!mfStk[mf]) mfStk[mf] = { mf, fg: 0, rm: 0, unr: 0, qual: 0, blk: 0 };
+    const tot = pick(r.total_qty, r.total_val);
+    if (r.type === 'RMPM') mfStk[mf].rm += tot;
+    else mfStk[mf].fg += tot;
+    mfStk[mf].unr += pick(r.unrest_qty, r.unrest_val);
+    mfStk[mf].qual += pick(r.qual_qty, r.qual_val);
+    mfStk[mf].blk += pick(r.block_qty, r.block_val);
+  });
+  const sArr = Object.values(mfStk);
+  renderSvgCombo('ch-stk-mf', sArr.map(x => x.mf), [
+    { name: 'FG Stock', type: 'bar', color: '#3b82f6', data: sArr.map(x => x.fg) },
+    { name: 'RMPM Stock', type: 'bar', color: '#f59e0b', data: sArr.map(x => x.rm) }
+  ]);
+  renderSvgCombo('ch-stk-split', sArr.map(x => x.mf), [
+    { name: 'Unrestricted', type: 'bar', color: '#10b981', data: sArr.map(x => x.unr) },
+    { name: 'Quality Insp.', type: 'bar', color: '#f59e0b', data: sArr.map(x => x.qual) },
+    { name: 'Blocked', type: 'bar', color: '#ef4444', data: sArr.map(x => x.blk) }
+  ]);
+  renderStockAndMb51Table(f);
+}
+
+function renderStockAndMb51Table(f) {
+  if (!f) f = getFilteredData();
+  const q = (document.getElementById('inp-stock').value || '').toLowerCase().trim();
+  const mode = (document.getElementById('sel-stk-type') || {}).value || 'MB52_ALL';
+  const th = document.getElementById('th-stock');
+  const tb = document.getElementById('tb-stock');
+  if (mode === 'MB51_ALL') {
+    th.innerHTML = `<tr><th>Posting Date</th><th>Part Number</th><th>Description</th><th>MvT</th><th>MF / Line</th><th>Customer / Supplier</th><th class="num">Quantity</th><th class="num">Value</th><th>Doc #</th></tr>`;
+    const rows = f.fMb51.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q));
+    tb.innerHTML = rows.slice(0, 400).map(r => `<tr>
+      <td>${r.date}</td><td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td>
+      <td><span class="badge ${r.mvt===101?'green':(r.mvt===601?'blue':'amber')}">${r.mvt}</span></td>
+      <td>${r.minifactory} / ${r.line}</td><td>${r.customer || r.supplier || '—'}</td>
+      <td class="num" style="font-weight:700">${r.qty.toLocaleString('en-IN')}</td>
+      <td class="num">₹${Math.round(r.price_val || r.val || 0).toLocaleString('en-IN')}</td>
+      <td>${r.doc || '—'}</td>
+    </tr>`).join('');
+  } else {
+    th.innerHTML = `<tr><th>Part Number</th><th>Description</th><th>Type</th><th>MF / Line</th><th class="num">Unrestricted</th><th class="num">Quality Insp.</th><th class="num">Total Active Stock</th><th class="num">Blocked</th><th class="num">In Transit</th></tr>`;
+    const rows = f.fMb52.filter(r => {
+      if (mode === 'MB52_RMPM' && r.type !== 'RMPM') return false;
+      if (mode === 'MB52_FG' && r.type === 'RMPM') return false;
+      if (q && !(r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q))) return false;
+      return true;
+    });
+    tb.innerHTML = rows.map(r => `<tr>
+      <td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.type}</td><td>${r.minifactory} / ${r.line}</td>
+      <td class="num" style="color:var(--green)">${fmt(pick(r.unrest_qty, r.unrest_val))}</td>
+      <td class="num" style="color:var(--amber)">${fmt(pick(r.qual_qty, r.qual_val))}</td>
+      <td class="num" style="font-weight:800">${fmt(pick(r.total_qty, r.total_val))}</td>
+      <td class="num" style="color:var(--red)">${fmt(pick(r.block_qty, r.block_val))}</td>
+      <td class="num">${fmt(pick(r.trans_qty, r.trans_val))}</td>
+    </tr>`).join('');
+  }
+}
+
+function getLatestCommentForPart(part) {
+  const list = COMMENTS_LOG.filter(c => c.part === part);
+  return list.length > 0 ? list[0] : null;
+}
+
+function renderCriticalTab(f) {
+  if (!f) f = getFilteredData();
+  const topN = parseInt((document.getElementById('sel-crit-top') || {}).value || '10', 10);
+  const hideNormal = (document.getElementById('chk-crit-hide-normal') || {}).checked;
+  const escOnly = (document.getElementById('chk-crit-help') || {}).checked;
+  const openOnly = (document.getElementById('chk-crit-open') || {}).checked;
+  const q = ((document.getElementById('inp-crit') || {}).value || '').toLowerCase().trim();
+
+  const allWithPend = f.fDemand.map(r => ({ r, m: calcPartMetrics(r), latest: getLatestCommentForPart(r.part) }))
+    .filter(x => x.m.pendV > 0)
+    .sort((a,b) => b.m.pendV - a.m.pendV);
+
+  const totPendV = allWithPend.reduce((s,x) => s + x.m.pendV, 0);
+  let filtered = allWithPend.filter(x => {
+    const crit = x.latest ? x.latest.criticality : 'Critical';
+    if (hideNormal && crit === 'Normal') return false;
+    if (escOnly && (!x.latest || x.latest.needs_escalation !== 'Yes')) return false;
+    if (openOnly && (!x.latest || x.latest.status === 'Closed')) return false;
+    if (q && !(x.r.part.toLowerCase().includes(q) || x.r.desc.toLowerCase().includes(q) || x.r.customer.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  if (topN > 0) filtered = filtered.slice(0, topN);
+  const shownPendV = filtered.reduce((s,x) => s + x.m.pendV, 0);
+  const covPct = totPendV > 0 ? (shownPendV / totPendV * 100).toFixed(1) : '0.0';
+  const lbl = document.getElementById('crit-cover-lbl');
+  if (lbl) lbl.textContent = `Showing ${filtered.length} items covering ${covPct}% of Total Pending Value`;
+
+  const tb = document.getElementById('tb-critical');
+  if (!tb) return;
+  tb.innerHTML = filtered.map((x, idx) => {
+    const { r, m, latest } = x;
+    const isNorm = latest && latest.criticality === 'Normal';
+    const isEsc = latest && latest.needs_escalation === 'Yes';
+    return `<tr class="${isNorm ? 'row-normal-muted' : ''}" data-deficit="${!isNorm}">
+      <td><b>${idx + 1}</b></td>
+      <td>${r.minifactory} / ${r.line}</td>
+      <td class="desc-cell" title="${esc(r.desc)}"><span class="part-code" onclick="openFgDrill('${esc(r.part)}')">${r.part}</span> — ${esc(r.desc)}</td>
+      <td>${r.customer}</td>
+      <td class="num">${m.planQ.toLocaleString('en-IN')}</td>
+      <td class="num" style="color:var(--green);font-weight:700">${m.prodQ.toLocaleString('en-IN')}</td>
+      <td class="num" style="color:var(--amber);font-weight:800">₹${(m.pendV/1e5).toFixed(2)} L</td>
+      <td class="num" style="font-weight:700">${m.pctAchTd.toFixed(1)}%</td>
+      <td><span class="crit-pill ${isNorm ? 'normal' : 'critical'}">${isNorm ? '✓ Normal' : '● Focus'}</span></td>
+      <td>${isEsc ? '<span class="badge red">🚨 YES</span>' : '<span class="badge">No</span>'}</td>
+      <td class="desc-cell">${latest ? `<b>${esc(latest.stakeholder)}:</b> ${esc(latest.discussion)}` : '<span style="color:var(--text-muted)">No input logged yet</span>'}</td>
+      <td><button class="btn-xs" onclick="openFgDrill('${esc(r.part)}')">🔍 Drill / Log</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderActionTrackerTab() {
+  const dueFilter = (document.getElementById('sel-act-due') || {}).value || 'ALL';
+  const stFilter = (document.getElementById('sel-act-status') || {}).value || 'OPEN_ONLY';
+  const escOnly = (document.getElementById('chk-act-esc') || {}).checked;
+  const q = ((document.getElementById('inp-act-search') || {}).value || '').toLowerCase().trim();
+  const todayIso = D.meta.latest_date_iso;
+
+  const rows = COMMENTS_LOG.filter(c => {
+    if (stFilter === 'OPEN_ONLY' && c.status === 'Closed') return false;
+    if (stFilter === 'Closed' && c.status !== 'Closed') return false;
+    if (escOnly && c.needs_escalation !== 'Yes') return false;
+    if (q && !(c.part.toLowerCase().includes(q) || (c.desc||'').toLowerCase().includes(q) || (c.owner||'').toLowerCase().includes(q) || (c.discussion||'').toLowerCase().includes(q))) return false;
+    if (dueFilter === 'NO_DATE' && c.target_date) return false;
+    if (dueFilter === 'OVERDUE' && (!c.target_date || c.target_date >= todayIso)) return false;
+    return true;
+  });
+
+  const badge = document.getElementById('act-summary-badge');
+  if (badge) badge.textContent = `${rows.length} Actions`;
+  const tb = document.getElementById('tb-actions');
+  if (!tb) return;
+  tb.innerHTML = rows.map(c => {
+    const isOver = c.target_date && c.target_date < todayIso && c.status !== 'Closed';
+    return `<tr data-deficit="${isOver}">
+      <td><span class="badge ${isOver ? 'red' : 'blue'}">${isOver ? 'OVERDUE' : (c.target_date || 'No Date')}</span></td>
+      <td>${c.target_date || '—'}</td>
+      <td>${c.minifactory} / ${c.line}</td>
+      <td class="desc-cell"><span class="part-code" onclick="openFgDrill('${esc(c.part)}')">${c.part}</span> — ${esc(c.desc)}</td>
+      <td><b>${esc(c.owner || c.stakeholder)}</b></td>
+      <td><span class="badge amber">${esc(c.category)}</span></td>
+      <td class="desc-cell">${esc(c.discussion)}</td>
+      <td class="desc-cell">${esc(c.action)}</td>
+      <td>${c.needs_escalation === 'Yes' ? '<span class="badge red">🚨 YES</span>' : 'No'}</td>
+      <td><button class="btn-xs" onclick="openFgDrill('${esc(c.part)}')">${esc(c.status)} / Drill</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openPopoutWithMode(mode) {
+  popoutReportMode = mode || 'DEMAND';
+  const m = document.getElementById('demand-popout-modal');
+  if (m) m.classList.add('open');
+  setPopoutReportMode(popoutReportMode);
+}
+function closeDemandPopout() {
+  const m = document.getElementById('demand-popout-modal');
+  if (m) m.classList.remove('open');
+}
+const closePopout = closeDemandPopout;
+
+function setPopoutReportMode(mode) {
+  popoutReportMode = mode;
+  const b1 = document.getElementById('btn-pop-mode-demand');
+  const b2 = document.getElementById('btn-pop-mode-yest');
+  if (b1) b1.classList.toggle('active', mode === 'DEMAND');
+  if (b2) b2.classList.toggle('active', mode === 'YESTERDAY');
+  const h = document.getElementById('popout-main-heading');
+  if (h) h.textContent = mode === 'YESTERDAY' ? 'YESTERDAY COMPLETE PERFORMANCE REPORT' : 'AUTOMATED PRODUCTION & DEMAND REVIEW REPORT';
+  renderPopoutTable();
+}
+
+function toggleChkDd(id, evt) {
+  if (evt) evt.stopPropagation();
+  const menu = document.querySelector('#' + id + ' .chk-dd-menu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function renderPopoutTable() {
+  const f = getFilteredData();
+  const q = ((document.getElementById('inp-demand-popout') || {}).value || '').toLowerCase().trim();
+  const th = document.getElementById('th-demand-popout');
+  const tb = document.getElementById('tb-demand-popout');
+  if (!th || !tb) return;
+
+  if (popoutReportMode === 'YESTERDAY') {
+    th.innerHTML = `<tr><th>Part Number</th><th>Description</th><th>Customer</th><th>MF / Line</th><th class="num">Yesterday Plan</th><th class="num">Yesterday Net Prod</th><th class="num">Shortfall</th><th class="num">Ach %</th><th class="num">Cust Dispatch (601)</th><th class="num">STO Dispatch (641)</th><th class="num">Current Stock</th><th>Yesterday Status</th></tr>`;
+    tb.innerHTML = f.fDemand.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q)).map(r => {
+      const m = calcPartMetrics(r);
+      const yp = pick(m.yestPlanQ, m.yestPlanV);
+      const ya = pick(r.yest_prod_qty, r.yest_prod_val);
+      const gp = Math.max(0, yp - ya);
+      return `<tr data-deficit="${m.pctYestProd < 85 && yp > 0}" onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+        <td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.customer}</td><td>${r.minifactory} / ${r.line}</td>
+        <td class="num">${fmt(yp)}</td><td class="num" style="color:var(--green);font-weight:700">${fmt(ya)}</td>
+        <td class="num" style="color:${gp>0?'var(--red)':'var(--text-muted)'};font-weight:700">${fmt(gp)}</td>
+        <td class="num" style="font-weight:700">${m.pctYestProd.toFixed(1)}%</td>
+        <td class="num" style="color:var(--blue)">${fmt(pick(r.yest_disp_601_qty, r.yest_disp_601_val))}</td>
+        <td class="num" style="color:var(--cyan)">${fmt(pick(r.yest_disp_641_qty, r.yest_disp_641_val))}</td>
+        <td class="num">${fmt(pick(r.stock_total_qty, r.stock_total_val))}</td>
+        <td>${m.pctYestProd >= 100 ? 'Achieved' : (ya > 0 ? 'Partial' : 'Zero Prod')}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    th.innerHTML = `<tr><th>Part Number</th><th>Description</th><th>Customer</th><th>MF / Line</th><th class="num">Monthly Plan</th><th class="num">Target TTD</th><th class="num">Prod TTD</th><th class="num">Current Stock</th><th class="num">% Ach</th><th class="num">Pending</th><th class="num">Yest Prod</th><th class="num">Run Rate</th><th class="num">Asking Rate</th><th>Remarks</th></tr>`;
+    tb.innerHTML = f.fDemand.filter(r => !q || r.part.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q)).map(r => {
+      const m = calcPartMetrics(r);
+      return `<tr data-deficit="${m.pctAchTd < 85 && m.planQ > 0}" onclick="openFgDrill('${esc(r.part)}')" style="cursor:pointer;">
+        <td class="part-code">${r.part}</td><td class="desc-cell">${r.desc}</td><td>${r.customer}</td><td>${r.minifactory} / ${r.line}</td>
+        <td class="num">${fmt(pick(m.planQ, m.planV))}</td><td class="num">${fmt(pick(m.ttdQ, m.ttdV))}</td>
+        <td class="num" style="color:var(--green);font-weight:700">${fmt(pick(m.prodQ, m.prodV))}</td>
+        <td class="num">${fmt(pick(r.stock_total_qty, r.stock_total_val))}</td>
+        <td class="num" style="font-weight:700">${m.pctAchTd.toFixed(1)}%</td>
+        <td class="num">${fmt(pick(m.pendQ, m.pendV))}</td><td class="num">${fmt(pick(r.yest_prod_qty, r.yest_prod_val))}</td>
+        <td class="num">${fmt(pick(m.runRateQ, m.runRateV))}</td><td class="num">${fmt(pick(m.askRateQ, m.askRateV))}</td>
+        <td>${esc(m.remStr)}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function openFgDrill(part) {
+  currentDrillPart = part;
+  const r = (D.demand || []).find(x => x.part === part);
+  if (!r) return;
+  const modal = document.getElementById('fg-drill-modal');
+  if (modal) modal.classList.add('open');
+
+  document.getElementById('drill-title').textContent = `${r.part} — ${r.desc}`;
+  document.getElementById('drill-sub').textContent = `${r.customer} | ${r.minifactory} / ${r.line} | Price: ₹${r.price}`;
+
+  const m = calcPartMetrics(r);
+  document.getElementById('drill-kpis').innerHTML = `
+    <div class="kpi-card"><div class="kpi-top"><span>Monthly Plan</span></div><div class="kpi-val">${m.planQ.toLocaleString('en-IN')}</div><div class="kpi-sub">₹${(m.planV/1e5).toFixed(2)} L</div></div>
+    <div class="kpi-card green"><div class="kpi-top"><span>Prod Till Date</span></div><div class="kpi-val">${m.prodQ.toLocaleString('en-IN')}</div><div class="kpi-sub">Ach: ${m.pctAchTd.toFixed(1)}%</div></div>
+    <div class="kpi-card amber"><div class="kpi-top"><span>Pending Plan</span></div><div class="kpi-val">${m.pendQ.toLocaleString('en-IN')}</div><div class="kpi-sub">₹${(m.pendV/1e5).toFixed(2)} L</div></div>
+    <div class="kpi-card cyan"><div class="kpi-top"><span>Yesterday Prod / Disp</span></div><div class="kpi-val">${r.yest_prod_qty.toLocaleString('en-IN')}</div><div class="kpi-sub">Disp: ${r.yest_disp_qty.toLocaleString('en-IN')}</div></div>
+    <div class="kpi-card purple"><div class="kpi-top"><span>MB52 Stock</span></div><div class="kpi-val">${r.stock_total_qty.toLocaleString('en-IN')}</div><div class="kpi-sub">Unr: ${r.stock_unrest_qty.toLocaleString('en-IN')}</div></div>
+    <div class="kpi-card red"><div class="kpi-top"><span>Asking Rate / Day</span></div><div class="kpi-val">${Math.round(m.askRateQ).toLocaleString('en-IN')}</div><div class="kpi-sub">Run Rate: ${Math.round(m.runRateQ).toLocaleString('en-IN')}/d</div></div>
+  `;
+
+  renderDrillChart(r);
+  renderDrillContext(r);
+  renderDrillComments(part);
+  resetCommentForm();
+}
+const openDrillModal = openFgDrill;
+
+function renderDrillContext(r) {
+  const wrap = document.getElementById('drill-context-wrap');
+  if (!wrap) return;
+  const rmList = (D.rmpm_parts || []).filter(rm => rm.minifactory === r.minifactory);
+  const mbList = (D.mb51 || []).filter(x => x.part === r.part).slice(0, 15);
+  wrap.innerHTML = `
+    <div style="padding:6px;">
+      <div style="font-size:10px;font-weight:800;color:var(--amber);margin-bottom:4px;">Associated RMPM in ${esc(r.minifactory)} (${rmList.length})</div>
+      <table class="wrapped-report" style="margin-bottom:8px;">
+        <thead><tr><th>RM Part</th><th>Description</th><th>Supplier</th><th class="num">Yest GRN</th><th class="num">Total Gap</th><th class="num">MB52 Stock</th></tr></thead>
+        <tbody>
+          ${rmList.map(rm => `<tr>
+            <td class="part-code">${rm.part}</td><td class="desc-cell">${rm.desc}</td><td>${rm.supplier}</td>
+            <td class="num" style="color:var(--green)">${rm.yest_grn_qty.toLocaleString('en-IN')}</td>
+            <td class="num" style="color:${rm.gap_total_qty>0?'var(--amber)':'var(--text-muted)'}">${rm.gap_total_qty.toLocaleString('en-IN')}</td>
+            <td class="num" style="font-weight:700">${rm.total_stock_qty.toLocaleString('en-IN')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="font-size:10px;font-weight:800;color:var(--blue);margin-bottom:4px;">Recent MB51 Movements for ${esc(r.part)}</div>
+      <table class="wrapped-report">
+        <thead><tr><th>Date</th><th>MvT</th><th class="num">Qty</th><th class="num">Value</th><th>Doc #</th></tr></thead>
+        <tbody>
+          ${mbList.map(m => `<tr>
+            <td>${m.date}</td><td><span class="badge ${m.mvt===101?'green':'blue'}">${m.mvt}</span></td>
+            <td class="num" style="font-weight:700">${m.qty.toLocaleString('en-IN')}</td>
+            <td class="num">₹${Math.round(m.price_val || m.val || 0).toLocaleString('en-IN')}</td>
+            <td>${m.doc || '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function closeFgDrill() {
+  const modal = document.getElementById('fg-drill-modal');
+  if (modal) modal.classList.remove('open');
+}
+const closeDrillModal = closeFgDrill;
+
+function setDrillChartMode(mode) {
+  drillChartMode = mode;
+  document.getElementById('btn-drill-val').classList.toggle('active', mode === 'VAL');
+  document.getElementById('btn-drill-qty').classList.toggle('active', mode === 'QTY');
+  const r = (D.demand || []).find(x => x.part === currentDrillPart);
+  if (r) renderDrillChart(r);
+}
+
+function renderDrillChart(r) {
+  const dMap = {};
+  (D.mb51 || []).filter(x => x.part === r.part).forEach(x => {
+    if (!dMap[x.date]) dMap[x.date] = { date: x.date, prod: 0, disp: 0 };
+    const v = drillChartMode === 'VAL' ? (x.price_val || x.val || x.qty * r.price) : x.qty;
+    if (x.mvt === 101 || x.mvt === 102) dMap[x.date].prod += v;
+    if (x.mvt === 601 || x.mvt === 602 || x.mvt === 641) dMap[x.date].disp += v;
+  });
+  const dArr = Object.values(dMap).sort((a,b) => a.date.localeCompare(b.date));
+  renderSvgCombo('ch-drill-daily', dArr.map(x => x.date.slice(5)), [
+    { name: 'Production (101/102)', type: 'bar', color: '#10b981', data: dArr.map(x => x.prod) },
+    { name: 'Dispatch (601+641)', type: 'line', color: '#3b82f6', data: dArr.map(x => x.disp) }
+  ]);
+}
+
+function renderDrillComments(part) {
+  const list = COMMENTS_LOG.filter(c => c.part === part);
+  const tb = document.getElementById('tb-drill-comments');
+  if (!tb) return;
+  tb.innerHTML = list.map(c => `<tr>
+    <td>${c.updated || c.created}</td>
+    <td><b>${esc(c.stakeholder)}</b></td>
+    <td><span class="badge amber">${esc(c.category)}</span></td>
+    <td class="desc-cell">${esc(c.discussion)}</td>
+    <td class="desc-cell">${esc(c.action)}</td>
+    <td>${esc(c.owner)}<br/><span style="color:var(--text-muted)">${c.target_date || ''}</span></td>
+    <td>${esc(c.criticality)}</td>
+    <td>${esc(c.status)}</td>
+    <td>
+      <button class="btn-xs" onclick="editComment('${esc(c.id)}')">Edit</button>
+      <button class="btn-xs" style="color:var(--red)" onclick="deleteCommentById('${esc(c.id)}')">✕</button>
+    </td>
+  </tr>`).join('');
+}
+
+function deleteCommentById(id) {
+  fetch(COMMENT_API_URL + '/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data && data.comments) {
+      COMMENTS_LOG.length = 0;
+      data.comments.forEach(c => COMMENTS_LOG.push(c));
+    }
+    renderDrillComments(currentDrillPart);
+    renderDashboard();
+    showToast('🗑️ Comment deleted');
+  })
+  .catch(() => {
+    const idx = COMMENTS_LOG.findIndex(x => x.id === id);
+    if (idx >= 0) COMMENTS_LOG.splice(idx, 1);
+    renderDrillComments(currentDrillPart);
+    renderDashboard();
+  });
+}
+
+function resetCommentForm() {
+  ['cf-id','cf-stakeholder','cf-discussion','cf-action','cf-owner','cf-target','cf-help'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+
+function editComment(id) {
+  const c = COMMENTS_LOG.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('cf-id').value = c.id;
+  document.getElementById('cf-stakeholder').value = c.stakeholder || '';
+  document.getElementById('cf-category').value = c.category || 'Other';
+  document.getElementById('cf-criticality').value = c.criticality || 'Critical';
+  document.getElementById('cf-discussion').value = c.discussion || '';
+  document.getElementById('cf-action').value = c.action || '';
+  document.getElementById('cf-owner').value = c.owner || '';
+  document.getElementById('cf-target').value = c.target_date || '';
+  document.getElementById('cf-status').value = c.status || 'Open';
+  document.getElementById('cf-boss').value = c.needs_escalation || 'No';
+  document.getElementById('cf-help').value = c.escalation_details || '';
+}
+
+function saveCurrentComment() {
+  const r = (D.demand || []).find(x => x.part === currentDrillPart);
+  if (!r) return;
+  const m = calcPartMetrics(r);
+  const payload = {
+    id: document.getElementById('cf-id').value || '',
+    part: r.part,
+    desc: r.desc,
+    customer: r.customer,
+    minifactory: r.minifactory,
+    line: r.line,
+    stakeholder: document.getElementById('cf-stakeholder').value,
+    category: document.getElementById('cf-category').value,
+    criticality: document.getElementById('cf-criticality').value,
+    discussion: document.getElementById('cf-discussion').value,
+    action: document.getElementById('cf-action').value,
+    owner: document.getElementById('cf-owner').value,
+    target_date: document.getElementById('cf-target').value,
+    status: document.getElementById('cf-status').value,
+    needs_escalation: document.getElementById('cf-boss').value,
+    escalation_details: document.getElementById('cf-help').value,
+    plan_val: Math.round(m.planV),
+    pending_val: Math.round(m.pendV)
+  };
+
+  fetch(COMMENT_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data && data.comments) {
+      COMMENTS_LOG.length = 0;
+      data.comments.forEach(c => COMMENTS_LOG.push(c));
+    }
+    renderDrillComments(r.part);
+    renderDashboard();
+    resetCommentForm();
+    showToast('✅ Saved to Critical_FG_Comments_Log.xlsx');
+  })
+  .catch(() => {
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    payload.id = payload.id || ('C' + String(COMMENTS_LOG.length + 1).padStart(4, '0'));
+    payload.created = now;
+    payload.updated = now;
+    COMMENTS_LOG.unshift(payload);
+    renderDrillComments(r.part);
+    renderDashboard();
+    resetCommentForm();
+    showToast('Saved in session');
+  });
+}
+
+function exportCurrentPartCommentsCSV() {
+  exportCSV('tb-drill-comments', `Comments_${currentDrillPart}.csv`);
+}
+
+function exportCSV(tableId, filename) {
+  const tbl = document.getElementById(tableId);
+  if (!tbl) return;
+  const rows = Array.from(tbl.querySelectorAll('tr')).map(tr =>
+    Array.from(tr.querySelectorAll('th,td')).map(td => '"' + td.innerText.replace(/"/g, '""').trim() + '"').join(',')
+  ).join('\n');
+  const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+window.addEventListener('DOMContentLoaded', initDashboard);
+</script>
+</body>
+</html>
